@@ -98,6 +98,7 @@ Every top up asks: Where did this money come from?
 - Capital: money from the starting capital. The capital left goes down.
 - Drawer cash: cash already in the store drawer from customers. Use this when you top up again at 7-Eleven, M Lhuillier or any outlet. The capital does not change. The cash that should be in the drawer goes down.
 - My own money: your personal money. Neither the capital nor the drawer changes.
+- Maribank (Load wallet only): money sent from the Maribank app for load. It is its own fund, so the capital and the drawer do not change. Load top ups are set to Maribank by default. Load is not bought from the GCash wallet, so GCash statement lines named Buy Load are skipped.
 The first top up is set to Capital and later ones to Drawer cash, but you can tap another choice. Top ups found from texts or statements are set to Drawer cash. Open any top up in the Money tab to change its source. The Money tab shows the total for each source.
 
 ## Photos of Mark, Yda and Mamang Judy

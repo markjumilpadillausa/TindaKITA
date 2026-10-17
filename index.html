@@ -258,6 +258,7 @@ html{-webkit-text-size-adjust:100%}
 .rtot{grid-column:1/-1;margin-top:-4px}
 .rextra{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px}
 #printarea{display:none}
+.foot{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);text-align:center;font-size:12px;line-height:1.6;color:var(--ink2)}.foot b{color:var(--ink);letter-spacing:.02em}
 @media print{body>*:not(#printarea){display:none!important}#printarea{display:block;color:#000;background:#fff;font:12px/1.4 Arial,sans-serif;padding:0}#printarea h1{font-size:20px;margin:0}#printarea h2{font-size:14px;margin:16px 0 6px}#printarea .pm{margin:2px 0 8px;color:#444}#printarea table{width:100%;border-collapse:collapse}#printarea th,#printarea td{border-bottom:1px solid #bbb;padding:4px 6px;text-align:left}#printarea .r{text-align:right}#printarea tr{break-inside:avoid}}
 @media (min-width:900px){.top{position:static}.stat{position:fixed;top:12px;right:20px;z-index:6;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}.syncp{max-width:none}}
 @media (min-width:900px){.nav button.on::before{top:22%;bottom:22%;left:0;right:auto;width:3px;height:auto;border-radius:0 3px 3px 0}}
@@ -271,6 +272,8 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
+var APP_VERSION='1.5.0',APP_CREATED='October 17, 2026';
+function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
 var TZ='Asia/Manila';
@@ -526,7 +529,7 @@ function loginView(){
   });
   if(S.ready&&!S.pubAccounts.length&&!S.loadErr)h+='<div class="empty"><b>No accounts yet</b><span class="sm">Run setup in the Apps Script editor first.</span></div>';
   if(!S.ready)h+='<p class="muted">Opening the store...</p>';
-  h+='</div>'+installBlock();
+  h+='</div>'+installBlock()+footerHtml();
   return h+'</div>';
  }
  var title,sub;
@@ -686,7 +689,7 @@ function draw(){
  var top='<div class="top"><div class="brand">'+cap(26)+'<span>TindaKita</span></div><div class="stat"><div class="clock" id="clk">'+esc(clockText())+'</div><button class="syncp" data-act="refresh" aria-label="Sync now"><i class="dot'+(off?' off':S.syncing?' busy':'')+'"></i><span>'+esc(syncText())+'</span></button></div></div>';
  var banner=off?'<div class="note warn">You are offline. You can still record sales, GCash, load, and top ups. They are saved on this phone and sent when the internet is back.</div>':'';
  var nav='<nav class="nav"><div class="in">'+tabs.map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-act="tab" data-t="'+t[0]+'" aria-label="'+t[1]+'">'+ic(t[2],26)+'<span>'+t[1]+'</span></button>'}).join('')+'</div></nav>';
- $app.innerHTML='<div class="wrap">'+top+'<div class="stack">'+banner+pendingHtml()+body+'</div></div>'+nav;
+ $app.innerHTML='<div class="wrap">'+top+'<div class="stack">'+banner+pendingHtml()+body+'</div>'+footerHtml()+'</div>'+nav;
 }
 
 /* ================= sheets ================= */
@@ -1360,7 +1363,7 @@ function moneyView(me){
  if(left<0)h+='<div class="note warn">More was spent than the capital. The extra came from sales money.</div>';
  h+='<div class="receipt"><div class="r"><span>Capital</span><span>'+php(m.capital)+'</span></div><div class="r"><span>Drinks and other things bought</span><span>- '+php(m.drinksBought)+'</span></div><div class="r"><span>Top ups paid from capital</span><span>- '+php(m.topCapital)+'</span></div><hr><div class="r tot"><span>Capital left</span><span class="'+(left<0?'neg':'')+'">'+php(left)+'</span></div></div>';
  h+=walletTiles();
- h+='<div class="card stack" style="gap:6px"><b>Where wallet top ups came from</b><div class="row between"><span class="sm">Capital</span><span class="num">'+php(m.topCapital)+'</span></div><div class="row between"><span class="sm">Drawer cash (cycled money)</span><span class="num">'+php(m.topDrawer)+'</span></div><div class="row between"><span class="sm">Own money put in</span><span class="num">'+php(m.topOwn)+'</span></div><div class="sm muted">Only top ups from capital lower the capital. Drawer cash lowers the cash in the drawer. Own money lowers neither.</div></div>';
+ h+='<div class="card stack" style="gap:6px"><b>Where wallet top ups came from</b><div class="row between"><span class="sm">Capital</span><span class="num">'+php(m.topCapital)+'</span></div><div class="row between"><span class="sm">Drawer cash (cycled money)</span><span class="num">'+php(m.topDrawer)+'</span></div><div class="row between"><span class="sm">Own money put in</span><span class="num">'+php(m.topOwn)+'</span></div><div class="row between"><span class="sm">Maribank (load fund)</span><span class="num">'+php(m.topMaribank)+'</span></div><div class="sm muted">Only top ups from capital lower the capital. Drawer cash lowers the cash in the drawer. Own money and Maribank lower neither.</div></div>';
  if(canEdit)h+='<div class="wrapbtns"><button class="btn soft" data-act="topup" data-w="gcash">'+ic('plus',18)+'Top up GCash</button><button class="btn soft" data-act="topup" data-w="load">'+ic('plus',18)+'Top up Load</button></div>';
  h+='<div class="card stack" style="gap:6px"><div class="row between"><span>Cash that should be in the drawer</span><b class="num">'+php(m.cashExpected)+'</b></div><div class="sm muted">Capital left, plus all drink sales, plus cash in with fees, minus cash given for cash out, plus load sales with fees, minus top ups paid from drawer cash. It is before any profit is paid out to partners.</div></div>';
  /* purchases */
@@ -1383,13 +1386,14 @@ function moneyView(me){
  }).join('')+'</div></div>';
  return h;
 }
-var FUNDS=[['capital','Capital','Money from the starting capital.'],['drawer','Drawer cash','Cash already in the store drawer from customers (sales, cash in). Use this when you top up again with 7-Eleven, M Lhuillier or any outlet.'],['own','My own money','Your personal money, not from the store. The capital and the drawer do not go down.']];
-function fundName(f){return f==='drawer'?'Drawer cash':f==='own'?'Own money':'Capital'}
+var FUNDS=[['capital','Capital','Money from the starting capital.'],['drawer','Drawer cash','Cash already in the store drawer from customers (sales, cash in). Use this when you top up again with 7-Eleven, M Lhuillier or any outlet.'],['own','My own money','Your personal money, not from the store. The capital and the drawer do not go down.'],['maribank','Maribank','Money sent from the Maribank app for load. It is its own fund. The capital and the drawer do not go down.']];
+function fundsFor(w){return FUNDS.filter(function(f){return f[0]!=='maribank'||w==='load'})}
+function fundName(f){return f==='drawer'?'Drawer cash':f==='own'?'Own money':f==='maribank'?'Maribank':'Capital'}
 function openTopup(w){
- var isL=w==='load',m0=S.money||{},fund=((S.topups||[]).some(function(t){return t.status!=='void'})||(m0.capitalLeft||0)<1)?'drawer':'capital';
+ var isL=w==='load',m0=S.money||{},fund=isL?'maribank':((S.topups||[]).some(function(t){return t.status!=='void'})||(m0.capitalLeft||0)<1)?'drawer':'capital';
  openSheet(head('Top up '+(isL?'Load':'GCash')+' wallet')+'<p class="sm muted" style="margin:0">Type the amount you added to the '+(isL?'Load':'GCash')+' wallet, then choose where the money came from.</p>'+
  '<div class="field"><label for="tp-a">Amount (PHP)</label><input id="tp-a" type="number" inputmode="decimal" min="1" step="0.01" data-focus></div>'+
- '<div class="field"><label>Where did this money come from?</label><div class="seg" id="tp-f">'+FUNDS.map(function(f){return '<button type="button" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div><div class="sm muted" id="tp-fh"></div></div>'+
+ '<div class="field"><label>Where did this money come from?</label><div class="seg" id="tp-f">'+fundsFor(w).map(function(f){return '<button type="button" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div><div class="sm muted" id="tp-fh"></div></div>'+
  '<div class="field"><label for="tp-n">Note (optional)</label><input id="tp-n" type="text" maxlength="80" placeholder="Example: 7-Eleven, M Lhuillier"></div>'+
  '<div class="receipt" id="tp-rc"></div><div class="err" id="tp-err"></div>'+
  '<div class="wrapbtns"><button class="btn primary grow" id="tp-go">Add top up</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
@@ -1403,6 +1407,7 @@ function openTopup(w){
     h='<div class="r muted"><span>Wallet now</span><span>'+php(b)+'</span></div><div class="r tot"><span>Wallet after</span><span>'+php(b+a)+'</span></div><hr>';
     if(fund==='capital')h+='<div class="r muted"><span>Capital left after</span><span>'+php((m.capitalLeft||0)-a)+'</span></div>';
     else if(fund==='drawer')h+='<div class="r muted"><span>Drawer cash after</span><span>'+php((m.cashExpected||0)-a)+'</span></div>';
+    else if(fund==='maribank')h+='<div class="r muted"><span>Maribank fund</span><span>+ '+php(a)+'</span></div><div class="r muted"><span>Capital and drawer</span><span>No change</span></div>';
     else h+='<div class="r muted"><span>Capital and drawer</span><span>No change</span></div>';
     if(fund==='capital'&&(m.capitalLeft||0)<a)h+='<div class="note warn">Capital left is only '+php(m.capitalLeft||0)+'. Choose Drawer cash or My own money.</div>';
     if(fund==='drawer'&&(m.cashExpected||0)<a)h+='<div class="note warn">The drawer should only have '+php(m.cashExpected||0)+'.</div>';
@@ -1423,7 +1428,7 @@ function openTopupDetail(id){
  var t=(S.topups||[]).filter(function(x){return x.id===id})[0];if(!t)return;
  var h=head((t.wallet==='load'?'Load':'GCash')+' top up')+'<div class="receipt"><div class="r tot"><span>Amount</span><span>'+php(t.amount)+'</span></div></div><div class="stamp">'+ic('clock',16)+'<span>Added by <b>'+esc(t.byName)+'</b> on '+esc(dtLabel(t.at))+'</span></div>'+(t.note?'<div class="sm">'+esc(t.note)+'</div>':'');
  h+='<div class="sm"><b>Money came from:</b> '+fundName(t.fund)+'</div>';
- if(t.status!=='void'&&canTouch(t))h+='<div class="field"><label>Change where it came from</label><div class="seg" id="tf">'+FUNDS.map(function(f){return '<button type="button" class="'+((t.fund||'capital')===f[0]?'on':'')+'" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div></div>';
+ if(t.status!=='void'&&canTouch(t))h+='<div class="field"><label>Change where it came from</label><div class="seg" id="tf">'+fundsFor(t.wallet).map(function(f){return '<button type="button" class="'+((t.fund||'capital')===f[0]?'on':'')+'" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div></div>';
  if(t.status==='void')h+='<div class="note warn"><b>Voided</b> by '+esc(t.voidedByName)+' on '+esc(dtLabel(t.voidedAt))+'.<br>Reason: '+esc(t.voidReason)+'</div>';
  else if(canTouch(t))h+='<div class="wrapbtns"><button class="btn danger" id="vt">'+ic('trash',18)+'Void top up</button></div>';
  openSheet(h,function(p){var tf=p.querySelector('#tf');if(tf)tf.addEventListener('click',async function(e){var x=e.target.closest('button');if(!x||x.dataset.f===(t.fund||'capital'))return;try{await api('setTopupFund',{id:t.id,fund:x.dataset.f});closeSheet();toast('Updated')}catch(er){toast(er.message)}});var b=p.querySelector('#vt');if(b)b.addEventListener('click',function(){voidSheet('Void this top up?','The wallet goes down by '+php(t.amount)+'. It stays on record with your name, the time, and the reason.','voidTopup',t.id)})});
