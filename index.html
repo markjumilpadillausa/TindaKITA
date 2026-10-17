@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TindaKita</title>
 <meta name="description" content="Family store app: beverage sales, photo catalogue, and an equal monthly share of the profit.">
-<meta name="theme-color" content="#0F3B3D">
+<meta name="theme-color" content="#F2F7F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TindaKita">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="favicon.svg"><link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -272,7 +272,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.5.0',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.6.0',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -375,7 +375,7 @@ async function api(action,data){
 function applyState(st,fromCache){
  var sig=JSON.stringify(st,function(k,v){return k==='serverTime'?undefined:v});var changed=sig!==S.sig||S.offline;S.sig=sig;
  S.me=st.me;S.accounts=st.accounts||[];S.items=(st.items||[]).slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
- S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rates=st.rates||[];S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
+ S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rates=st.rates||[];S.rateHist=st.rateHist||{gcash:[],load:[]};S.ratesMeta=st.ratesMeta||{};S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
  try{var c=JSON.parse(JSON.stringify(st));c._savedAt=fromCache?(st._savedAt||0):Date.now();c.accounts.forEach(function(a){delete a.pin});c.logins=[];localStorage.setItem('tindakita.state',JSON.stringify(c))}catch(e){}
  if(changed)render();
 }
@@ -633,6 +633,7 @@ function profileView(me){
  h+='<div><h3 style="margin-bottom:8px">Share by month</h3><div class="list">'+hist.map(function(x){
   return '<div class="li"><span style="width:76px" class="sm muted">'+esc(mlabel(x.m))+'</span><div class="bar grow"><i style="width:'+Math.round(Math.abs(x.v)/max*100)+'%"></i></div><span class="amt" style="min-width:96px;text-align:right">'+php(x.v)+'</span></div>';
  }).join('')+'</div></div>';
+ if(me.role==='user')h+=ratesCard()+loadRatesCard();
  h+='<div class="wrapbtns"><button class="btn soft" data-act="changepin">Change my PIN</button><button class="btn ghost" data-act="logout">'+ic('out')+'Log out</button></div>'+installBlock();
  return h;
 }
@@ -690,6 +691,7 @@ function draw(){
  var banner=off?'<div class="note warn">You are offline. You can still record sales, GCash, load, and top ups. They are saved on this phone and sent when the internet is back.</div>':'';
  var nav='<nav class="nav"><div class="in">'+tabs.map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-act="tab" data-t="'+t[0]+'" aria-label="'+t[1]+'">'+ic(t[2],26)+'<span>'+t[1]+'</span></button>'}).join('')+'</div></nav>';
  $app.innerHTML='<div class="wrap">'+top+'<div class="stack">'+banner+pendingHtml()+body+'</div>'+footerHtml()+'</div>'+nav;
+ afterDraw();
 }
 
 /* ================= sheets ================= */
@@ -925,19 +927,20 @@ function openAddAccount(){
 ICONS.upload='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>';
 var DEFAULT_RATES=[[1,500,10],[501,1000,25],[1001,1500,35],[1501,2000,45],[2001,2500,55],[2501,3000,65],[3001,3500,75],[3501,4000,85],[4001,4500,95],[4501,5000,105],[5001,5500,115],[5501,6000,125],[6001,6500,135],[6501,7000,145],[7001,7500,155],[7501,8000,165],[8001,8500,175],[8501,9000,185],[9001,9500,195],[9501,10000,205]];
 function rateList(){return (S.rates&&S.rates.length)?S.rates:DEFAULT_RATES}
-function feeFor(amount){var a=Number(amount),l=rateList();for(var i=0;i<l.length;i++)if(a>l[i][0]-1&&a<=l[i][1])return Number(l[i][2]);return null}
+function verAt(kind,at){var v=null;if(!at||!S.rateHist)return null;(S.rateHist[kind]||[]).forEach(function(e){if(Number(e.at)<=Number(at))v=e.v});return v}
+function feeFor(amount,at){var a=Number(amount),l=verAt('gcash',at)||rateList();for(var i=0;i<l.length;i++)if(a>l[i][0]-1&&a<=l[i][1])return Number(l[i][2]);return null}
 function gAll(m){return (S.gcash||[]).filter(function(g){return g.month===m}).sort(function(a,b){return b.at-a.at})}
 function gLive(m){return gAll(m).filter(function(g){return g.status!=='void'})}
 function gFees(list){var x=0;list.forEach(function(g){x+=g.fee||0});return r2(x)}
 function gShare(list,id){var x=0;list.forEach(function(g){x+=(g.shares&&g.shares[id])||0});return r2(x)}
 function gTypeName(t){return t==='out'?'Cash out':t==='load'?'Load':'Cash in'}
-function loadFee(a){
- var c=S.loadCfg||{step:50,fee:5},l=(c.ranges&&c.ranges.length)?c.ranges:null;a=Number(a);if(!(a>0))return null;
+function loadFee(a,at){
+ var c=verAt('load',at)||S.loadCfg||{step:50,fee:5},l=(c.ranges&&c.ranges.length)?c.ranges:null;a=Number(a);if(!(a>0))return null;
  if(!l){l=[];for(var i=0;i<10;i++)l.push([i*50+1,i*50+50,(i+1)*5])}
  for(var j=0;j<l.length;j++)if(a>l[j][0]-1&&a<=l[j][1])return Number(l[j][2]);
  var last=l[l.length-1];return a>last[1]?r2(Number(last[2])+Math.ceil((a-last[1])/c.step-1e-9)*c.fee):null;
 }
-function feeOf(type,a){return type==='load'?loadFee(a):feeFor(a)}
+function feeOf(type,a,at){return type==='load'?loadFee(a,at):feeFor(a,at)}
 function walletBal(w){return S.money?(w==='load'?S.money.loadBal:S.money.gcashBal):0}
 function walletTiles(){
  if(!S.money)return '';
@@ -958,7 +961,7 @@ function gcashView(me){
  var live=gLive(S.month).filter(same),all=gAll(S.month).filter(same);
  var cin=live.filter(function(g){return g.type==='in'}),cout=live.filter(function(g){return g.type==='out'});
  function sum(l){var x=0;l.forEach(function(g){x+=g.amount});return r2(x)}
- var h='<div class="cat-head"><h2>'+(isL?'Load':'GCash')+'</h2>'+(canEdit?'<button class="btn primary sm" data-act="gnew" data-k="'+sub+'">'+ic('plus',18)+'Add</button>':'')+'</div>';
+ var h='<div class="cat-head"><h2>'+(isL?'Load':'GCash')+'</h2>'+(canEdit?'<span class="row" style="gap:8px">'+(!isL?'<button class="btn soft sm" data-act="pastesms">Paste message</button>':'')+'<button class="btn primary sm" data-act="gnew" data-k="'+sub+'">'+ic('plus',18)+'Add</button></span>':'')+'</div>';
  h+='<div class="seg" role="tablist"><button class="'+(isL?'':'on')+'" data-act="gsub" data-s="gcash">GCash</button><button class="'+(isL?'on':'')+'" data-act="gsub" data-s="load">Load</button></div>'+monthPills();
  var bal=walletBal(sub);
  h+='<div class="card stack" style="gap:8px"><div class="row between"><div><div class="sm muted">'+(isL?'Load':'GCash')+' wallet, money available now</div><div class="num" style="font-size:24px;font-weight:600">'+php(bal)+'</div></div>'+(canEdit?'<button class="btn soft sm" data-act="topup" data-w="'+sub+'">'+ic('plus',18)+'Top up</button>':'')+'</div>'+
@@ -985,7 +988,7 @@ function importsList(){
 function rateRows(k){return k==='load'?((S.loadCfg&&S.loadCfg.ranges&&S.loadCfg.ranges.length)?S.loadCfg.ranges:[[1,50,5],[51,100,10],[101,150,15],[151,200,20],[201,250,25],[251,300,30],[301,350,35],[351,400,40],[401,450,45],[451,500,50]]):rateList()}
 function rateTable(k){
  var isL=k==='load',ed=S.redit&&S.redit[k],d=ed?S.rdraft[k]:rateRows(k).map(function(r){return r.slice()});
- var h='<div class="card stack" id="rt-'+k+'"><div><h3>'+(isL?'Load charge matrix':'GCash rate card')+'</h3><p class="sm muted" style="margin:4px 0 0">'+(ed?'Change the boxes, then tap Save. Each line is: start of the range, end of the range, and the charge.':'Locked. The app reads these lines by itself when it works out the fee. Tap Edit to change them.')+'</p></div>';
+ var h='<div class="card stack" id="rt-'+k+'"><div><h3>'+(isL?'Load charge matrix':'GCash rate card')+'</h3><p class="sm muted" style="margin:4px 0 0">'+(ed?'Change the boxes, then tap Save. Each line is: start of the range, end of the range, and the charge.':'Locked. The app reads these lines by itself when it works out the fee. Tap Edit to change them.')+'</p><div class="note" style="margin-top:8px">A change counts only for new entries from the moment you save. Entries already recorded keep their old fee and their old split.</div>'+(S.ratesMeta&&S.ratesMeta[k]?'<div class="sm muted" style="margin-top:6px">Last changed by '+esc(S.ratesMeta[k].by)+', '+esc(dtLabel(S.ratesMeta[k].at))+'</div>':'')+'</div>';
  h+='<div class="rrow rhead"><span>From</span><span>To</span><span>'+(isL?'Charge':'Fee')+'</span><span></span></div>';
  d.forEach(function(r,i){
   h+='<div class="rrow"><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(r[0])+'" data-k="'+k+'" data-i="'+i+'" data-c="0" aria-label="From"'+(ed?'':' disabled')+'><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(r[1])+'" data-k="'+k+'" data-i="'+i+'" data-c="1" aria-label="To"'+(ed?'':' disabled')+'><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(r[2])+'" data-k="'+k+'" data-i="'+i+'" data-c="2" aria-label="Fee"'+(ed?'':' disabled')+'>'+(ed?'<button class="iconbtn" data-act="rdel" data-k="'+k+'" data-i="'+i+'" aria-label="Remove this line">'+ic('trash',20)+'</button>':'<span></span>')+(isL&&!ed?'<span class="rtot sm muted">Total pay '+php(Number(r[0])+Number(r[2]))+' to '+php(Number(r[1])+Number(r[2]))+'</span>':'')+'</div>';
@@ -1095,7 +1098,7 @@ function openEditGcash(g){
  '<div class="field"><label for="ge-r">Reason for the change</label><input id="ge-r" type="text" maxlength="200" placeholder="Example: typed the wrong amount"></div><div class="err" id="ge-err"></div>'+
  '<div class="wrapbtns"><button class="btn primary grow" id="ge-go">Save change</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
   function q(i){return p.querySelector('#'+i)}
-  q('ge-a').addEventListener('input',function(){var t=feeOf(g.type,q('ge-a').value);if(t!==null)q('ge-f').value=t});
+  q('ge-a').addEventListener('input',function(){var t=feeOf(g.type,q('ge-a').value,g.at);if(t!==null)q('ge-f').value=t});
   q('ge-go').addEventListener('click',async function(){
    var a=r2(q('ge-a').value),f=r2(q('ge-f').value),r=q('ge-r').value.trim(),err=q('ge-err');
    if(!(a>0)){err.textContent='Enter the amount.';return}
@@ -1363,7 +1366,7 @@ function moneyView(me){
  if(left<0)h+='<div class="note warn">More was spent than the capital. The extra came from sales money.</div>';
  h+='<div class="receipt"><div class="r"><span>Capital</span><span>'+php(m.capital)+'</span></div><div class="r"><span>Drinks and other things bought</span><span>- '+php(m.drinksBought)+'</span></div><div class="r"><span>Top ups paid from capital</span><span>- '+php(m.topCapital)+'</span></div><hr><div class="r tot"><span>Capital left</span><span class="'+(left<0?'neg':'')+'">'+php(left)+'</span></div></div>';
  h+=walletTiles();
- h+='<div class="card stack" style="gap:6px"><b>Where wallet top ups came from</b><div class="row between"><span class="sm">Capital</span><span class="num">'+php(m.topCapital)+'</span></div><div class="row between"><span class="sm">Drawer cash (cycled money)</span><span class="num">'+php(m.topDrawer)+'</span></div><div class="row between"><span class="sm">Own money put in</span><span class="num">'+php(m.topOwn)+'</span></div><div class="row between"><span class="sm">Maribank (load fund)</span><span class="num">'+php(m.topMaribank)+'</span></div><div class="sm muted">Only top ups from capital lower the capital. Drawer cash lowers the cash in the drawer. Own money and Maribank lower neither.</div></div>';
+ h+='<div class="card stack" style="gap:6px"><b>Where wallet top ups came from</b><div class="row between"><span class="sm">Capital</span><span class="num">'+php(m.topCapital)+'</span></div><div class="row between"><span class="sm">Drawer cash (cycled money)</span><span class="num">'+php(m.topDrawer)+'</span></div><div class="row between"><span class="sm">Own money put in</span><span class="num">'+php(m.topOwn)+'</span></div><div class="sm muted">Only top ups from capital lower the capital. Drawer cash lowers the cash in the drawer. Own money lowers neither.</div></div>';
  if(canEdit)h+='<div class="wrapbtns"><button class="btn soft" data-act="topup" data-w="gcash">'+ic('plus',18)+'Top up GCash</button><button class="btn soft" data-act="topup" data-w="load">'+ic('plus',18)+'Top up Load</button></div>';
  h+='<div class="card stack" style="gap:6px"><div class="row between"><span>Cash that should be in the drawer</span><b class="num">'+php(m.cashExpected)+'</b></div><div class="sm muted">Capital left, plus all drink sales, plus cash in with fees, minus cash given for cash out, plus load sales with fees, minus top ups paid from drawer cash. It is before any profit is paid out to partners.</div></div>';
  /* purchases */
@@ -1386,11 +1389,11 @@ function moneyView(me){
  }).join('')+'</div></div>';
  return h;
 }
-var FUNDS=[['capital','Capital','Money from the starting capital.'],['drawer','Drawer cash','Cash already in the store drawer from customers (sales, cash in). Use this when you top up again with 7-Eleven, M Lhuillier or any outlet.'],['own','My own money','Your personal money, not from the store. The capital and the drawer do not go down.'],['maribank','Maribank','Money sent from the Maribank app for load. It is its own fund. The capital and the drawer do not go down.']];
-function fundsFor(w){return FUNDS.filter(function(f){return f[0]!=='maribank'||w==='load'})}
-function fundName(f){return f==='drawer'?'Drawer cash':f==='own'?'Own money':f==='maribank'?'Maribank':'Capital'}
+var FUNDS=[['capital','Capital','Money from the starting capital.'],['drawer','Drawer cash','Cash already in the store drawer from customers (sales, cash in). Use this when you top up again with 7-Eleven, M Lhuillier or any outlet.'],['own','My own money','Your personal money, not from the store. The capital and the drawer do not go down.']];
+function fundsFor(w){return FUNDS}
+function fundName(f){return f==='drawer'?'Drawer cash':f==='own'?'Own money':'Capital'}
 function openTopup(w){
- var isL=w==='load',m0=S.money||{},fund=isL?'maribank':((S.topups||[]).some(function(t){return t.status!=='void'})||(m0.capitalLeft||0)<1)?'drawer':'capital';
+ var isL=w==='load',m0=S.money||{},fund=((S.topups||[]).some(function(t){return t.status!=='void'})||(m0.capitalLeft||0)<1)?'drawer':'capital';
  openSheet(head('Top up '+(isL?'Load':'GCash')+' wallet')+'<p class="sm muted" style="margin:0">Type the amount you added to the '+(isL?'Load':'GCash')+' wallet, then choose where the money came from.</p>'+
  '<div class="field"><label for="tp-a">Amount (PHP)</label><input id="tp-a" type="number" inputmode="decimal" min="1" step="0.01" data-focus></div>'+
  '<div class="field"><label>Where did this money come from?</label><div class="seg" id="tp-f">'+fundsFor(w).map(function(f){return '<button type="button" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div><div class="sm muted" id="tp-fh"></div></div>'+
@@ -1407,7 +1410,6 @@ function openTopup(w){
     h='<div class="r muted"><span>Wallet now</span><span>'+php(b)+'</span></div><div class="r tot"><span>Wallet after</span><span>'+php(b+a)+'</span></div><hr>';
     if(fund==='capital')h+='<div class="r muted"><span>Capital left after</span><span>'+php((m.capitalLeft||0)-a)+'</span></div>';
     else if(fund==='drawer')h+='<div class="r muted"><span>Drawer cash after</span><span>'+php((m.cashExpected||0)-a)+'</span></div>';
-    else if(fund==='maribank')h+='<div class="r muted"><span>Maribank fund</span><span>+ '+php(a)+'</span></div><div class="r muted"><span>Capital and drawer</span><span>No change</span></div>';
     else h+='<div class="r muted"><span>Capital and drawer</span><span>No change</span></div>';
     if(fund==='capital'&&(m.capitalLeft||0)<a)h+='<div class="note warn">Capital left is only '+php(m.capitalLeft||0)+'. Choose Drawer cash or My own money.</div>';
     if(fund==='drawer'&&(m.cashExpected||0)<a)h+='<div class="note warn">The drawer should only have '+php(m.cashExpected||0)+'.</div>';
@@ -1521,6 +1523,50 @@ function printReport(){
  try{window.print()}catch(x){toast('Printing is not available here')}
 }
 
+/* ===== messages: paste, share, and the one time pop up ===== */
+(function(){try{var q=new URLSearchParams(location.search),t=[q.get('title'),q.get('text'),q.get('url')].filter(Boolean).join(' ');if(t){sessionStorage.setItem('tk.share',t);history.replaceState(null,'',location.pathname)}}catch(e){}})();
+function smsMsg(r){
+ var s=r&&r.sms;if(!s)return 'Done';
+ if(!s.saved)return s.reason==='already recorded'?'Already recorded':s.reason==='duplicate'?'Already recorded':'That message is not a cash in, cash out, or top up';
+ return s.status==='added'?'Recorded':s.status==='linked'?'Matched with an entry you already have':'Saved. Tap Add in the GCash tab to record it';
+}
+function openMessages(){
+ openSheet(head('Record from a message')+'<p class="sm muted" style="margin:0">Copy the GCash or Maribank message, paste it here, and TindaKita reads the amount, the reference number and whether money came in or went out.</p>'+
+ '<div class="field"><label for="ms-t">Message</label><textarea id="ms-t" rows="5" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:15px var(--font);color:var(--ink)" data-focus></textarea></div>'+
+ '<div class="err" id="ms-err"></div><div class="wrapbtns"><button class="btn primary grow" id="ms-go">Read this message</button><button class="btn ghost" data-sheet="close">Cancel</button></div>'+
+ '<p class="sm muted" style="margin:0">Tip: on an Android phone with TindaKita installed, open the message, tap Share, then choose TindaKita. It is read the same way.</p>',function(p){
+  p.querySelector('#ms-go').addEventListener('click',async function(){
+   var t=p.querySelector('#ms-t').value.trim(),err=p.querySelector('#ms-err');if(t.length<8){err.textContent='Paste the message first.';return}
+   this.disabled=true;err.textContent='';
+   try{var r=await api('pasteSms',{text:t});closeSheet();toast(smsMsg(r))}catch(e){err.textContent=e.message;this.disabled=false}
+  });
+ });
+}
+function openMsgPop(){
+ openSheet(head('Record from messages')+
+ '<p style="margin:0">A phone does not let a website read your messages or notifications. That is a security rule, so no pop up can switch it on. TindaKita can still record them for you in these ways:</p>'+
+ '<ol class="sm" style="margin:0;padding-left:20px;display:grid;gap:8px"><li><b>Share.</b> Install TindaKita on your phone. Open the GCash or Maribank message, tap Share, then choose TindaKita.</li><li><b>Paste.</b> Copy the message and tap Paste a message below.</li><li><b>Automatic.</b> Mark can set up a free forwarder app that sends each message here by itself. The steps are in Admin, Settings.</li></ol>'+
+ '<div class="wrapbtns"><button class="btn primary grow" id="mp-paste">Paste a message</button><button class="btn soft" id="mp-later">Later</button><button class="btn ghost" id="mp-never">Do not show again</button></div>',function(p){
+  p.querySelector('#mp-paste').addEventListener('click',function(){closeSheet();openMessages()});
+  p.querySelector('#mp-later').addEventListener('click',closeSheet);
+  p.querySelector('#mp-never').addEventListener('click',function(){try{localStorage.setItem('tk.msgpop','1')}catch(e){}closeSheet()});
+ });
+}
+function afterDraw(){
+ var me=cur();if(!me||S.flow)return;
+ var sh=null;try{sh=sessionStorage.getItem('tk.share')}catch(e){}
+ if(sh&&!S.sharing&&navigator.onLine){
+  if(me.role==='viewer'){try{sessionStorage.removeItem('tk.share')}catch(e){}toast('Viewers cannot record messages');return}
+  S.sharing=true;try{sessionStorage.removeItem('tk.share')}catch(e){}
+  api('pasteSms',{text:sh}).then(function(r){toast(smsMsg(r))}).catch(function(e){toast(e.message)}).then(function(){S.sharing=false});
+  return;
+ }
+ if(!S.msgPopDone&&S.ready&&me.role!=='viewer'&&window.innerWidth<900&&!$sheet.firstChild){
+  S.msgPopDone=true;var seen=false;try{seen=localStorage.getItem('tk.msgpop')==='1'}catch(e){}
+  if(!seen)setTimeout(function(){if(!$sheet.firstChild)openMsgPop()},900);
+ }
+}
+
 /* ================= events ================= */
 $app.addEventListener('input',function(e){
  var t=e.target;
@@ -1554,6 +1600,7 @@ $app.addEventListener('click',async function(e){
  else if(a==='dismissfail'){S.failed.splice(+id,1);draw()}
  else if(a==='photo'){var pf=document.getElementById('pf-file');if(pf)pf.click()}
  else if(a==='print'){printReport()}
+ else if(a==='pastesms'){openMessages()}
  else if(a==='copy'){try{navigator.clipboard.writeText(b.dataset.v);toast('Copied')}catch(x){toast('Press and hold to copy')}}
  else if(!me)return;
  else if(a==='item'){var it=S.items.filter(function(x){return x.id===id})[0];if(!it)return;if(me.role==='viewer')openDetails(it);else openSale(it)}
@@ -1570,6 +1617,11 @@ $app.addEventListener('click',async function(e){
  else if(a==='inboxadd'){try{await api('inboxAdd',{id:id,type:b.dataset.k});toast('Added')}catch(x){toast(x.message)}}
  else if(a==='inboxlink'){try{await api('inboxAdd',{id:id,linkId:b.dataset.g});toast('Linked to the typed entry')}catch(x){toast(x.message)}}
  else if(a==='inboxskip'){try{await api('inboxIgnore',{id:id})}catch(x){toast(x.message)}}
+ else if(a==='redit')rateStart(b.dataset.k)
+ else if(a==='radd')rateAdd(b.dataset.k)
+ else if(a==='rcancel'){S.redit[b.dataset.k]=false;draw()}
+ else if(a==='rsave')rateSave(b.dataset.k)
+ else if(a==='rdel'){S.rdraft[b.dataset.k].splice(+b.dataset.i,1);draw()}
  else if(me.role!=='admin')return;
  else if(a==='addacc')openAddAccount();
  else if(a==='reveal'){S.reveal[id]=!S.reveal[id];draw()}
@@ -1582,11 +1634,6 @@ $app.addEventListener('click',async function(e){
   var d=byId(id);if(!d)return;
   confirmSheet('Remove '+d.name+'?','The account and PIN are deleted. Past sales stay in the records.','Remove account',function(){return api('deleteAccount',{id:id})},true);
  }
- else if(a==='redit')rateStart(b.dataset.k)
- else if(a==='radd')rateAdd(b.dataset.k)
- else if(a==='rcancel'){S.redit[b.dataset.k]=false;draw()}
- else if(a==='rsave')rateSave(b.dataset.k)
- else if(a==='rdel'){S.rdraft[b.dataset.k].splice(+b.dataset.i,1);draw()}
  else if(a==='newkey')confirmSheet('Make a new key?','The old key stops working. You must paste the new link into the forwarding app on the phone.','Make new key',function(){return api('saveSms',{newKey:true})});
  else if(a==='savecap'){
   var val=Number(document.getElementById('cap').value)||0;

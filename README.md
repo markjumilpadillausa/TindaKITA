@@ -98,8 +98,24 @@ Every top up asks: Where did this money come from?
 - Capital: money from the starting capital. The capital left goes down.
 - Drawer cash: cash already in the store drawer from customers. Use this when you top up again at 7-Eleven, M Lhuillier or any outlet. The capital does not change. The cash that should be in the drawer goes down.
 - My own money: your personal money. Neither the capital nor the drawer changes.
-- Maribank (Load wallet only): money sent from the Maribank app for load. It is its own fund, so the capital and the drawer do not change. Load top ups are set to Maribank by default. Load is not bought from the GCash wallet, so GCash statement lines named Buy Load are skipped.
+The Load wallet works the same way as the GCash wallet. Load is not bought from the GCash wallet, so GCash statement lines named Buy Load are skipped. If you add more capital later, choose Capital when you top up.
 The first top up is set to Capital and later ones to Drawer cash, but you can tap another choice. Top ups found from texts or statements are set to Drawer cash. Open any top up in the Money tab to change its source. The Money tab shows the total for each source.
+
+## Changing the rates (Mark and Yda)
+
+Mark changes the GCash and Load tables in Admin, Settings. Yda changes the same tables in her Profile. Each change is saved with the name and time. It counts only for new entries from that moment. Entries already recorded keep their old fee and their old split, and if one of them is edited later it still uses the rates that were in force when it was recorded.
+
+## Recording from messages
+
+A phone does not let a website read messages or notifications, so there is no permission to switch on. Use one of these:
+- Share: install TindaKita on an Android phone. Open the GCash or Maribank message, tap Share, then choose TindaKita.
+- Paste: in the GCash tab tap Paste message, paste the text and tap Read this message.
+- Automatic: Mark sets up a free forwarder app using the steps in Admin, Settings.
+A short pop up explains this the first time someone opens the app on a phone. Choose Do not show again to hide it.
+
+## Logo
+
+The logo has no box behind it now. Replace icon-192.png, icon-512.png, icon-180.png, icon-maskable-512.png, favicon.svg and manifest.json in GitHub. Installed copies of the app may keep the old icon until the app is removed from the phone and installed again.
 
 ## Photos of Mark, Yda and Mamang Judy
 

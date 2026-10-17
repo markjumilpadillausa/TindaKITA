@@ -2,9 +2,9 @@
    Keeps the app shell available offline so the app opens like an installed app.
    Sales, drinks and shares always come from the Google Sheet, so they are never cached here.
    When you upload a new index.html to GitHub, change the number in CACHE (for example v2). */
-const CACHE = 'tindakita-v8';
+const CACHE = 'tindakita-v9';
 const FONTS = 'tindakita-fonts-v1';
-const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-180.png'];
+const SHELL = ['./', 'index.html', 'manifest.json', 'favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-180.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
