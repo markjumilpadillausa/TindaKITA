@@ -198,3 +198,23 @@ The app looks old after an update: close and open it again. If you replaced the 
 ## Coming later
 
 Stock counts and Load selling can be added as new tabs in the same app and Sheet.
+
+## Screenshot upload (GCash and Load)
+
+Yda and Mark can add transactions from screenshots. There is one upload button in the GCash tab and one in the Load tab, because the GCash app and the Maribank app show different receipts. The button for the tab you are in decides which list the entries go to.
+
+1. Tap Upload GCash screenshots (or Upload Load screenshots). Choose one photo or many.
+2. The app reads each photo: amount, reference number, name, contact number, and date and time. Anything it cannot read is left blank or marked, and the amount must be filled in before the entry can be added.
+3. The fee is set automatically from the rate tables that applied on that date. Edit it if it is different.
+4. A summary shows every photo with its details. Tap Edit on any line to fix a detail, or Remove to leave it out. Nothing is added until you tap Add.
+5. Each added entry keeps its photo. A small photo icon shows on the row, and tapping it shows the picture. The entry also shows a Screenshot label.
+
+Reading photos needs the internet the first time, because the reader loads from the web. Photos are saved in a Google Drive folder called TindaKita Receipts.
+
+### Duplicates
+
+- Same reference number and same amount in the same tab (already recorded, or twice in the same upload): only one is kept. The other is shown as already recorded and skipped.
+- Same reference number but a different amount: the entry is highlighted. Choose Keep both or Delete this one. Adding is blocked until you choose.
+- Same reference number already in the other tab (a GCash photo uploaded in Load, or the other way round): the entry is highlighted with the details of the first one. Choose Continue to add it here too, or Review to hold it back and not add it yet.
+- The server checks again when you tap Add, so a duplicate cannot slip in even if two people upload at the same time.
+

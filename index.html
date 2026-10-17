@@ -235,6 +235,8 @@ html{-webkit-text-size-adjust:100%}
 }
 
 /* v3 look: no boxed icons, status bar, avatars */
+.phico{display:inline-flex;vertical-align:middle;padding:3px 5px;border-radius:8px;background:var(--glass-soft);color:var(--glass);margin-left:4px;cursor:pointer}
+.shotbox{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}.shotbox img{max-width:96vw;max-height:80vh;object-fit:contain;border-radius:10px;background:#fff}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--bg);padding-block:8px 10px;align-items:flex-start;gap:10px}
 .stat{display:grid;gap:2px;justify-items:end;min-width:0}
 .clock{font-size:12px;font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -273,7 +275,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.9.0',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.10.0',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -1028,9 +1030,9 @@ function walletTiles(full){
 function canTouchG(g){return canTouch(g)}
 
 function gRow(g){
- var v=g.status==='void',chips=(g.pending?'<span class="chip">Sending</span>':'')+(g.editCount>0?'<span class="chip warn">Edited</span>':'')+(v?'<span class="chip admin">Voided</span>':'')+(g.source==='statement'?'<span class="chip ok">Statement</span>':'')+(g.feeSource==='manual'?'<span class="chip">Custom fee</span>':'');
+ var v=g.status==='void',chips=(g.pending?'<span class="chip">Sending</span>':'')+(g.editCount>0?'<span class="chip warn">Edited</span>':'')+(v?'<span class="chip admin">Voided</span>':'')+(g.source==='statement'?'<span class="chip ok">Statement</span>':'')+(g.source==='screenshot'?'<span class="chip ok">Screenshot</span>':'')+(g.photoId?'<span class="phico" role="button" tabindex="0" data-act="gphoto" data-p="'+esc(g.photoId)+'" aria-label="View photo">'+ic('image',16)+'</span>':'')+(g.feeSource==='manual'?'<span class="chip">Custom fee</span>':'');
  var isL=g.type==='load';
- return '<button class="li lib'+(v?' voided':'')+'" data-act="gitem" data-id="'+esc(g.id)+'"><div class="grow"><div><b>'+gTypeName(g.type)+'</b> <span class="muted num">'+php(g.amount)+'</span> '+chips+'</div><div class="sm muted">'+timeLabel(g.at)+' by '+esc(g.byName)+(isL&&g.note?' · '+esc(g.note):'')+(g.ref?' · Ref '+esc(g.ref):'')+'</div></div>'+
+ return '<button class="li lib'+(v?' voided':'')+'" data-act="gitem" data-id="'+esc(g.id)+'"><div class="grow"><div><b>'+gTypeName(g.type)+'</b> <span class="muted num">'+php(g.amount)+'</span> '+chips+'</div><div class="sm muted">'+timeLabel(g.at)+' by '+esc(g.byName)+(isL&&g.note?' · '+esc(g.note):'')+(g.name?' · '+esc(g.name):'')+(g.ref?' · Ref '+esc(g.ref):'')+'</div></div>'+
   '<div style="text-align:right"><div class="amt amt1 pos">+'+php(g.fee)+'</div><div class="sm muted">fee</div></div></button>';
 }
 function gcashView(me){
@@ -1047,6 +1049,7 @@ function gcashView(me){
  if(canEdit&&!isL)h+=inboxHtml();
  h+=topupHist(sub);
  h+='<div class="hero"><div class="lbl">'+esc(mlabel(S.month))+' '+(isL?'load':'GCash')+' fee income</div><div class="big num">'+php(gFees(live))+'</div><div class="sub">'+(isL?'<span><b class="num">'+live.length+'</b> sold, '+php(sum(live))+' load</span>':'<span><b class="num">'+cin.length+'</b> cash in, '+php(sum(cin))+'</span><span><b class="num">'+cout.length+'</b> cash out, '+php(sum(cout))+'</span>')+'</div></div>';
+ if(canEdit)h+='<div class="card stack" style="gap:10px"><div class="row" style="gap:12px">'+ic('image',22)+'<div class="grow"><b>Upload '+(isL?'Load':'GCash')+' screenshots</b><div class="sm muted">Add one or many screenshots from the '+(isL?'Maribank or GCash':'GCash')+' app. The app reads the amount, reference number, name and date, then shows a summary to check before anything is added.</div></div></div><button class="btn soft" data-act="gshots" data-k="'+sub+'">'+ic('upload',18)+'Upload '+(isL?'Load':'GCash')+' screenshots</button></div>';
  if(canEdit&&!isL)h+='<div class="card stack" style="gap:10px"><div class="row" style="gap:12px">'+ic('upload',22)+'<div class="grow"><b>Check with the GCash statement</b><div class="sm muted">Upload the PDF or a picture. It checks every row against what was typed in, adds the missing ones, and fixes wrong amounts. Every change is stamped.</div></div></div><button class="btn soft" data-act="gstmt">'+ic('upload',18)+'Upload statement</button></div>';
  if(ps.length&&live.length)h+='<div><h3 style="margin-bottom:8px">Fee income per person</h3><div class="list">'+ps.map(function(a){return '<div class="li'+(a.id===me.id?' me':'')+'"><span class="avatar">'+initial(a.name)+'</span><span class="grow"><b>'+esc(a.name)+'</b></span><span class="amt">'+php(gShare(live,a.id))+'</span></div>'}).join('')+'</div></div>';
  if(!all.length)return h+'<div class="empty">'+ic('wallet',34)+'<b>No '+(isL?'load sales':'GCash transactions')+' in '+esc(mlabel(S.month))+'</b><span class="sm">'+(canEdit?'Tap Add after each '+(isL?'load sale':'cash in or cash out')+'. The fee is filled in automatically.':'They will show here once they are recorded.')+'</span></div>';
@@ -1157,8 +1160,10 @@ function openGcashDetail(id){
  var hist=(S.gcashLog||[]).filter(function(l){return l.gid===id}).sort(function(a,b){return a.at-b.at});
  var h=head(gTypeName(g.type)+(g.type==='load'&&g.note?' ('+g.note+')':''))+'<div class="receipt"><div class="r"><span>Amount</span><span>'+php(g.amount)+'</span></div><div class="r tot"><span>Fee income</span><span class="pos">'+php(g.fee)+'</span></div><hr>'+
   Object.keys(g.shares||{}).map(function(k){return '<div class="r"><span>'+esc(nameOf(k))+'</span><span>'+php(g.shares[k])+'</span></div>'}).join('')+'</div>';
- h+='<div class="stamp">'+ic('clock',16)+'<span>'+(g.source==='statement'?'Added from a statement by <b>':'Recorded by <b>')+esc(g.byName)+'</b> on '+esc(dtLabel(g.at))+'</span></div>';
+ h+='<div class="stamp">'+ic('clock',16)+'<span>'+(g.source==='statement'?'Added from a statement by <b>':g.source==='screenshot'?'Added from a screenshot by <b>':'Recorded by <b>')+esc(g.byName)+'</b> on '+esc(dtLabel(g.at))+'</span></div>';
  if(g.ref)h+='<div class="sm">Reference number: <b class="num">'+esc(g.ref)+'</b></div>';
+ if(g.name||g.phone)h+='<div class="sm">'+(g.name?esc(g.name):'')+(g.name&&g.phone?' · ':'')+(g.phone?esc(g.phone):'')+'</div>';
+ if(g.photoId)h+='<button class="btn soft" id="gd-photo">'+ic('image',18)+'View photo</button>';
  if(g.feeSource==='manual')h+='<div class="note warn">Custom fee'+(g.feeNote?'. Reason: '+esc(g.feeNote):'')+'</div>';
  if(g.status==='void')h+='<div class="note warn"><b>Voided</b> by '+esc(g.voidedByName)+' on '+esc(dtLabel(g.voidedAt))+'.<br>Reason: '+esc(g.voidReason)+'</div>';
  if(g.editCount>0){
@@ -1167,7 +1172,8 @@ function openGcashDetail(id){
  }else if(g.status!=='void'){h+='<p class="sm muted" style="margin:0">This transaction has not been changed.</p>'}
  if(canTouchG(g))h+='<div class="wrapbtns"><button class="btn soft" id="gd-edit">'+ic('edit',18)+'Edit</button><button class="btn danger" id="gd-void">'+ic('trash',18)+'Void</button></div>';
  openSheet(h,function(p){
-  var e=p.querySelector('#gd-edit'),v=p.querySelector('#gd-void');
+  var e=p.querySelector('#gd-edit'),v=p.querySelector('#gd-void'),ph=p.querySelector('#gd-photo');
+  if(ph)ph.addEventListener('click',function(){showPhoto(driveImg(g.photoId,1200),g.photoId)});
   if(e)e.addEventListener('click',function(){openEditGcash(g)});
   if(v)v.addEventListener('click',function(){openVoidGcash(g)});
  });
@@ -1648,6 +1654,236 @@ function afterDraw(){
  }
 }
 
+/* ================= screenshots ================= */
+var SH=null,TESS_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+function driveImg(id,w){return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w'+(w||1200)}
+function showPhoto(src,id){
+ var o=document.createElement('div');o.className='shotbox';o.setAttribute('role','dialog');o.setAttribute('aria-label','Receipt photo');
+ o.innerHTML='<img src="'+esc(src)+'" alt="Receipt photo"><div class="row" style="gap:10px">'+(id?'<a class="btn soft" href="https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view" target="_blank" rel="noopener">Open full size</a>':'')+'<button class="btn primary" type="button">Close</button></div>';
+ function off(){document.removeEventListener('keydown',key);if(o.parentNode)o.parentNode.removeChild(o)}
+ function key(e){if(e.key==='Escape')off()}
+ o.addEventListener('click',function(e){if(e.target===o||e.target.tagName==='BUTTON')off()});
+ document.addEventListener('keydown',key);document.body.appendChild(o);
+}
+function shotKindName(k){return k==='load'?'Load':'GCash'}
+function openShots(kind){
+ SH={kind:kind,items:[],found:[],sid:Date.now(),uid:0,checkNote:''};
+ var K=shotKindName(kind);
+ openSheet(head('Upload '+K+' screenshots')+
+ '<p style="margin:0">Choose one or many screenshots from the '+(kind==='load'?'Maribank or GCash app':'GCash app')+' that show the reference number. The app reads them and shows a summary. Nothing is added until you confirm.</p>'+
+ '<label class="btn primary" for="sh-file" style="justify-content:center;cursor:pointer">'+ic('upload',18)+'Choose screenshots</label><input id="sh-file" type="file" accept="image/*" multiple hidden>'+
+ '<div class="sm muted" id="sh-msg" role="status"></div>',function(p){
+  p.querySelector('#sh-file').addEventListener('change',function(){var fs=[].slice.call(this.files||[]);if(fs.length)shotsRead(p,fs)});
+ });
+}
+function shotImage(file){
+ return new Promise(function(res,rej){
+  var url=URL.createObjectURL(file),img=new Image();
+  img.onload=function(){
+   var m=Math.max(img.naturalWidth,img.naturalHeight),sc=Math.min(1,1100/m),w=Math.max(1,Math.round(img.naturalWidth*sc)),h=Math.max(1,Math.round(img.naturalHeight*sc));
+   var cv=document.createElement('canvas');cv.width=w;cv.height=h;var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0,w,h);
+   URL.revokeObjectURL(url);var q=0.72,d=cv.toDataURL('image/jpeg',q);while(d.length>800000&&q>0.3){q-=0.1;d=cv.toDataURL('image/jpeg',q)}res(d);
+  };
+  img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('image'))};img.src=url;
+ });
+}
+var MONTHS3={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function shotParse(it,text){
+ var t=String(text||'').replace(/\r/g,''),lines=t.split('\n').map(function(l){return l.trim()}).filter(Boolean),m,i;
+ /* reference number first, so its digits are not mistaken for a phone number */
+ var tp=t,ref='';
+ m=t.match(/ref(?:erence)?\.?\s*(?:no\.?|number|num|#|id)?\s*[:.#]?\s*([0-9][0-9 ]{8,22}[0-9])/i);
+ if(m){ref=m[1].replace(/\s/g,'');tp=t.replace(m[0],' ')}
+ else{m=t.match(/ref(?:erence)?\.?\s*(?:no\.?|number|num|#|id)?\s*[:.#]?\s*([A-Za-z0-9]{6,24})/i);if(m){ref=m[1];tp=t.replace(m[0],' ')}
+  else{m=t.match(/(?:^|[^\d])(\d{4}\s\d{3}\s\d{6})(?!\d)/);if(m){ref=m[1].replace(/\s/g,'');tp=t.replace(m[1],' ')}}}
+ it.ref=ref.replace(/[^0-9A-Za-z]/g,'').slice(0,24);
+ /* amount */
+ var amt=0,NUM=/(\d{1,3}(?:,\d{3})+|\d+)\.(\d{2})(?!\d)/;
+ for(i=0;i<lines.length&&!amt;i++){
+  if(/amount/i.test(lines[i])&&!/total/i.test(lines[i])){m=lines[i].match(NUM)||(lines[i+1]||'').match(NUM);if(m)amt=parseFloat((m[1]+'.'+m[2]).replace(/,/g,''))}
+ }
+ if(!amt){m=tp.match(NUM);if(m)amt=parseFloat((m[1]+'.'+m[2]).replace(/,/g,''))}
+ if(!amt){m=tp.match(/(?:php|₱)\s?(\d{1,3}(?:,\d{3})+|\d+)(?![\d.])/i);if(m)amt=parseFloat(m[1].replace(/,/g,''))}
+ it.amount=amt>0?r2(amt):0;
+ /* contact number */
+ m=tp.match(/(?:^|[^\d])((?:\+?63|0)\s?9\d{2}[\s-]?\d{3}[\s-]?\d{4})(?!\d)/);
+ if(m){var d=m[1].replace(/[^0-9]/g,'');if(d.indexOf('63')===0)d='0'+d.slice(2);it.phone=d}
+ else{m=tp.match(/((?:\+?63|0)\s?9\d{2}[\s*xX•.-]{1,6}[*xX•.]{2,}[\s*xX•.-]*\d{2,4})/);if(m)it.phone=m[1].replace(/\s/g,'')}
+ /* name */
+ for(i=0;i<lines.length;i++){
+  var l=lines[i],nm='';
+  m=l.match(/^(?:sent to|send to|to|from|received from|recipient|receiver|sender|account name|name)\b\s*[:\-]?\s*(.+)$/i);
+  if(m)nm=m[1];
+  else if(/^(?:sent to|send to|from|to|received from|recipient|receiver|sender|account name|name)\s*[:\-]?$/i.test(l))nm=lines[i+1]||'';
+  nm=nm.replace(/[^A-Za-z .,'\-ñÑ]/g,' ').replace(/\s+/g,' ').trim();
+  if(nm.length>=3&&/[A-Za-z]{2}/.test(nm)&&!/gcash|maribank|amount|total|fee/i.test(nm)){it.name=nm.slice(0,40);break}
+ }
+ /* date and time */
+ var dt=null;
+ m=t.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})(?:[,\s]+(?:at\s+)?(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?)?/i);
+ if(m){var hh=m[4]?+m[4]:12,mi=m[5]?+m[5]:0,ap=(m[6]||'').toLowerCase();if(ap==='pm'&&hh<12)hh+=12;if(ap==='am'&&hh===12)hh=0;dt=new Date(+m[3],MONTHS3[m[1].toLowerCase()],+m[2],hh,mi)}
+ if(!dt){m=t.match(/(\d{4})-(\d{2})-(\d{2})(?:[ T]+(\d{1,2}):(\d{2}))?/);if(m)dt=new Date(+m[1],+m[2]-1,+m[3],m[4]?+m[4]:12,m[5]?+m[5]:0)}
+ if(!dt){m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})\s*(am|pm)?)?/i);if(m){var h2=m[4]?+m[4]:12,a2=(m[6]||'').toLowerCase();if(a2==='pm'&&h2<12)h2+=12;if(a2==='am'&&h2===12)h2=0;dt=new Date(+m[3],+m[1]-1,+m[2],h2,m[5]?+m[5]:0)}}
+ if(dt&&!isNaN(dt.getTime())&&dt.getTime()<Date.now()+86400000&&dt.getFullYear()>2020){it.at=dt.getTime();it.dateRead=true}
+ /* cash in or out, and a check that the right tab is used */
+ if(it.kind==='gcash'){
+  if(/cash\s*out|cashout|withdraw/i.test(t))it.type='out';
+  else if(/cash\s*in|cashin|received|deposit/i.test(t))it.type='in';
+  else it.hints.push('Check if this is cash in or cash out.');
+  if(/buy\s*load|prepaid load|load\s*(?:successful|purchase)/i.test(t)&&!/cash\s*(?:in|out)/i.test(t))it.hints.push('This looks like a Load receipt. Check that you are in the right tab.');
+ }else if(/cash\s*(?:in|out)/i.test(t)&&!/load/i.test(t))it.hints.push('This looks like a GCash cash in or cash out. Check that you are in the right tab.');
+ if(!it.amount)it.hints.push('The amount could not be read. Tap Edit and type it.');
+ if(!it.ref&&!it.phone)it.hints.push('No reference number or contact number was read.');
+ if(!it.dateRead)it.hints.push('The date could not be read. It is set to now. Tap Edit to change it.');
+}
+function shotFee(it){
+ if(it.feeManual)return;
+ it.fee=it.amount>0?feeOf(it.type,it.amount,it.at):null;
+}
+async function shotsRead(p,files){
+ var msg=p.querySelector('#sh-msg'),worker=null;
+ msg.textContent='Loading the reader...';
+ try{await loadScript(TESS_URL);worker=await Tesseract.createWorker('eng')}
+ catch(e){msg.textContent=(e&&e.message)||'The reader could not load. Check the internet and try again.';return}
+ for(var i=0;i<files.length;i++){
+  msg.textContent='Reading '+(i+1)+' of '+files.length+'...';
+  var it={n:++SH.uid,kind:SH.kind,type:SH.kind==='load'?'load':'in',amount:0,fee:null,feeManual:false,name:'',phone:'',ref:'',at:Date.now(),dateRead:false,hints:[],photo:'',editing:false,choice:'',removed:false,error:''};
+  try{
+   it.photo=await shotImage(files[i]);
+   var r=await worker.recognize(files[i]);shotParse(it,(r&&r.data&&r.data.text)||'');
+  }catch(e){
+   if(!it.photo){continue}
+   it.hints.push('This photo could not be read. Tap Edit and fill in the details.');
+  }
+  shotFee(it);SH.items.push(it);
+ }
+ try{await worker.terminate()}catch(e){}
+ if(!SH.items.length){msg.textContent='None of the photos could be opened. Try again.';return}
+ msg.textContent='Checking for duplicates...';
+ await shotsCheck();
+ shotsReview();
+}
+async function shotsCheck(){
+ var refs=[];SH.items.forEach(function(it){if(it.ref&&refs.indexOf(it.ref)<0)refs.push(it.ref)});
+ SH.checkNote='';
+ if(!refs.length){SH.found=[];return}
+ try{var j=await api('checkRefs',{refs:refs});SH.found=j.found||[]}
+ catch(e){SH.found=[];SH.checkNote='Old entries could not be checked now. Duplicates are checked again when you add.'}
+}
+function shotMatches(it,idx){
+ var out=[];if(!it.ref)return out;
+ SH.found.forEach(function(f){if(f.ref===it.ref)out.push({where:f.type==='load'?'the Load tab':'the GCash tab',other:(f.type==='load')!==(it.kind==='load'),amount:f.amount,at:f.at,by:f.byName,batch:false})});
+ SH.items.forEach(function(o,j){if(j<idx&&!o.removed&&o.choice!=='delete'&&o.ref===it.ref)out.push({where:'another photo in this upload',other:o.kind!==it.kind,amount:o.amount,at:o.at,by:'',batch:true})});
+ return out;
+}
+function shotState(it,idx){
+ var ms=shotMatches(it,idx),exact=ms.filter(function(m){return !m.other&&m.amount===it.amount});
+ if(exact.length)return {skip:true,ms:exact,need:'',add:false,block:false};
+ var need=ms.length?(ms.some(function(m){return m.other})?'other':'amount'):'';
+ var incomplete=!(it.amount>0)||it.fee===null;
+ var okChoice=!need||it.choice==='keep'||it.choice==='continue';
+ return {skip:false,ms:ms,need:need,incomplete:incomplete,add:!it.removed&&!incomplete&&okChoice,block:!it.removed&&(incomplete||(need&&!it.choice))};
+}
+function uniq(a){return a.filter(function(x,i){return a.indexOf(x)===i})}
+function localDT(ms){var d=new Date(ms),z=function(n){return (n<10?'0':'')+n};return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T'+z(d.getHours())+':'+z(d.getMinutes())}
+function shotCard(it,i){
+ var st=shotState(it,i),h='<div class="card stack" style="gap:8px;'+(st.skip?'opacity:.65;':'')+(st.need&&!it.choice?'border:2px solid var(--warn);':'')+'" data-i="'+i+'">';
+ h+='<div class="row" style="gap:10px;align-items:flex-start"><img src="'+it.photo+'" alt="Screenshot '+(i+1)+'" data-sh="zoom" data-i="'+i+'" style="width:64px;height:84px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none">'+
+  '<div class="grow stack" style="gap:2px;min-width:0"><div><b>'+esc(it.kind==='load'?'Load':gTypeName(it.type))+'</b> <span class="num">'+(it.amount>0?php(it.amount):'Amount not read')+'</span></div>'+
+  '<div class="sm muted">Fee '+(it.fee===null?'not set':php(it.fee))+(it.feeManual?' (custom)':'')+'</div>'+
+  '<div class="sm">'+esc(it.name||'No name')+(it.phone?' · '+esc(it.phone):'')+'</div>'+
+  '<div class="sm muted">'+esc(dtLabel(it.at))+(it.dateRead?'':' (date not read)')+'</div>'+
+  '<div class="sm muted">'+(it.ref?'Ref '+esc(it.ref):'No reference number')+'</div></div></div>';
+ it.hints.forEach(function(x){h+='<div class="note warn">'+esc(x)+'</div>'});
+ if(it.error)h+='<div class="note warn"><b>Not added.</b> '+esc(it.error)+'</div>';
+ function mline(m){return 'Same reference number in '+m.where+': '+php(m.amount)+(m.batch?'':' on '+esc(dtLabel(m.at))+(m.by?' by '+esc(m.by):''))+'.'}
+ if(st.skip)h+='<div class="note warn"><b>Already recorded.</b> '+uniq(st.ms.map(mline)).join(' ')+' Same amount, so this one is skipped.</div>';
+ else if(st.need==='amount'){
+  h+='<div class="note warn"><b>Check this one.</b> '+uniq(st.ms.map(mline)).join(' ')+' The amount is different.</div>'+
+   '<div class="wrapbtns"><button class="btn '+(it.choice==='keep'?'primary':'soft')+'" data-sh="keep" data-i="'+i+'">Keep both</button><button class="btn '+(it.choice==='delete'?'danger':'soft')+'" data-sh="delete" data-i="'+i+'">Delete this one</button></div>';
+ }else if(st.need==='other'){
+  h+='<div class="note warn"><b>Already in the other tab or list.</b> '+uniq(st.ms.map(mline)).join(' ')+(it.choice==='review'?' Held for review. It will not be added.':' Continue to add it here too, or review it first.')+'</div>'+
+   '<div class="wrapbtns"><button class="btn '+(it.choice==='continue'?'primary':'soft')+'" data-sh="continue" data-i="'+i+'">Continue</button><button class="btn '+(it.choice==='review'?'primary':'soft')+'" data-sh="review" data-i="'+i+'">Review</button></div>';
+ }
+ if(it.editing){
+  h+='<div class="stack" style="gap:8px">'+
+   (it.kind==='gcash'?'<div class="field"><label>Type</label><select data-sh-f="type" data-i="'+i+'"><option value="in"'+(it.type==='in'?' selected':'')+'>Cash in</option><option value="out"'+(it.type==='out'?' selected':'')+'>Cash out</option></select></div>':'')+
+   '<div class="two"><div class="field"><label>Amount (PHP)</label><input type="number" inputmode="decimal" min="1" step="0.01" data-sh-f="amount" data-i="'+i+'" value="'+(it.amount||'')+'"></div><div class="field"><label>Fee (PHP)</label><input type="number" inputmode="decimal" min="0" step="0.01" data-sh-f="fee" data-i="'+i+'" value="'+(it.fee===null?'':it.fee)+'" placeholder="Automatic"></div></div>'+
+   '<div class="field"><label>Name</label><input type="text" maxlength="40" data-sh-f="name" data-i="'+i+'" value="'+esc(it.name)+'"></div>'+
+   '<div class="field"><label>Contact number</label><input type="text" inputmode="tel" maxlength="20" data-sh-f="phone" data-i="'+i+'" value="'+esc(it.phone)+'"></div>'+
+   '<div class="field"><label>Reference number</label><input type="text" maxlength="24" data-sh-f="ref" data-i="'+i+'" value="'+esc(it.ref)+'"></div>'+
+   '<div class="field"><label>Date and time</label><input type="datetime-local" data-sh-f="at" data-i="'+i+'" value="'+localDT(it.at)+'"></div></div>';
+ }
+ h+='<div class="wrapbtns"><button class="btn soft" data-sh="edit" data-i="'+i+'">'+ic('edit',18)+(it.editing?'Done':'Edit')+'</button><button class="btn ghost" data-sh="remove" data-i="'+i+'">'+ic('trash',18)+'Remove</button></div></div>';
+ return h;
+}
+function shotsPaint(){
+ var body=$sheet.querySelector('#sh-body');if(!body)return;
+ var live=SH.items.map(function(it,i){return {it:it,i:i}}).filter(function(x){return !x.it.removed});
+ var add=0,skip=0,choose=0,fix=0;
+ live.forEach(function(x){var s=shotState(x.it,x.i);if(s.skip)skip++;else{if(s.add)add++;if(s.incomplete)fix++;else if(s.need&&!x.it.choice)choose++}});
+ var h='<div class="note"><b>'+add+'</b> ready to add'+(skip?', <b>'+skip+'</b> skipped as duplicates':'')+(choose?', <b>'+choose+'</b> need your choice':'')+(fix?', <b>'+fix+'</b> need details':'')+'. Check each one, tap Edit to change anything, then add.</div>';
+ if(SH.checkNote)h+='<div class="note warn">'+esc(SH.checkNote)+'</div>';
+ h+=live.map(function(x){return shotCard(x.it,x.i)}).join('');
+ var blockers=live.filter(function(x){return shotState(x.it,x.i).block}).length;
+ h+=(blockers?'<div class="sm muted">Choose an action or fix the details on the highlighted ones, or remove them, to continue.</div>':'')+'<div class="wrapbtns"><button class="btn primary grow" id="sh-go"'+(add===0||blockers?' disabled':'')+'>Add '+add+' to history</button><button class="btn ghost" data-sheet="close">Cancel</button></div>';
+ body.innerHTML=h;
+}
+function shotsReview(){
+ openSheet(head('Summary of '+shotKindName(SH.kind)+' screenshots')+'<div id="sh-body" class="stack" style="gap:10px"></div>',function(p){
+  p.addEventListener('click',shotClick);p.addEventListener('change',shotChange);
+ });
+ shotsPaint();
+}
+async function shotClick(e){
+ var go=e.target.closest('#sh-go');if(go){shotsSave(go);return}
+ var b=e.target.closest('[data-sh]');if(!b||!SH)return;
+ var it=SH.items[+b.dataset.i],a=b.dataset.sh;if(!it)return;
+ if(a==='zoom'){showPhoto(it.photo);return}
+ if(a==='edit')it.editing=!it.editing;
+ else if(a==='remove')it.removed=true;
+ else if(a==='keep'||a==='delete'||a==='continue'||a==='review')it.choice=it.choice===a?'':a;
+ shotsPaint();
+}
+async function shotChange(e){
+ var t=e.target,f=t.dataset&&t.dataset.shF;if(!f||!SH)return;
+ var it=SH.items[+t.dataset.i];if(!it)return;
+ var v=t.value,recheck=false;
+ if(f==='type'){it.type=v==='out'?'out':'in';shotFee(it)}
+ else if(f==='amount'){it.amount=r2(v)>0?r2(v):0;shotFee(it)}
+ else if(f==='fee'){if(String(v).trim()===''){it.feeManual=false;shotFee(it)}else{it.feeManual=true;it.fee=r2(v)}}
+ else if(f==='name')it.name=v.trim().slice(0,40);
+ else if(f==='phone')it.phone=v.replace(/[^0-9+*xX\- ]/g,'').trim().slice(0,20);
+ else if(f==='ref'){it.ref=v.replace(/[^0-9A-Za-z]/g,'').slice(0,24);it.choice='';recheck=true}
+ else if(f==='at'){var ms=new Date(v).getTime();if(!isNaN(ms)){it.at=ms;it.dateRead=true;shotFee(it)}}
+ it.error='';
+ if(recheck)await shotsCheck();
+ shotsPaint();
+}
+async function shotsSave(btn){
+ var plan=SH.items.map(function(it,i){return {it:it,st:shotState(it,i)}}).filter(function(x){return !x.it.removed&&x.st.add});
+ if(!plan.length)return;
+ btn.disabled=true;var done=0,skipped=0,stop='';
+ SH.items.forEach(function(it,i){if(!it.removed&&(it.choice==='delete'||shotState(it,i).skip))it.done=true});
+ for(var k=0;k<plan.length;k++){
+  var it=plan[k].it;btn.textContent='Adding '+(k+1)+' of '+plan.length+'...';
+  try{
+   await api('addGcashShot',{kind:it.kind,type:it.type,amount:it.amount,fee:it.fee,at:it.at,ref:it.ref,name:it.name,phone:it.phone,photoData:it.photo,force:!!plan[k].st.need,cid:'shot-'+SH.sid+'-'+it.n});
+   it.removed=true;it.done=true;done++;
+  }catch(x){
+   if(x&&x.code==='duplicate'){it.removed=true;it.done=true;skipped++}
+   else if(x&&x.code==='network'){stop=x.message;break}
+   else it.error=(x&&x.message)||'Could not add this one.';
+  }
+ }
+ SH.items=SH.items.filter(function(it){return !it.done});
+ var left=SH.items.filter(function(it){return !it.removed}).length;
+ toast('Added '+done+(skipped?'. Skipped '+skipped+' duplicate'+(skipped===1?'':'s'):'')+(left?'. '+left+' still need a look.':'.'));
+ if(!left&&!stop){closeSheet();return}
+ await shotsCheck();shotsPaint();
+ if(stop)toast(stop);
+}
+
 /* ================= events ================= */
 $app.addEventListener('input',function(e){
  var t=e.target;
@@ -1691,6 +1927,8 @@ $app.addEventListener('click',async function(e){
  else if(a==='gnew')openGcash(b.dataset.k);
  else if(a==='gsub'){S.gsub=b.dataset.s;draw()}
  else if(a==='ssub'){S.ssub=b.dataset.s;draw()}
+ else if(a==='gphoto'){showPhoto(driveImg(b.dataset.p,1200),b.dataset.p)}
+ else if(a==='gshots'){openShots(b.dataset.k==='load'?'load':'gcash')}
  else if(a==='topup')openTopup(b.dataset.w);
  else if(a==='buy')openPurchase();
  else if(a==='pitem')openPurchaseDetail(id);
