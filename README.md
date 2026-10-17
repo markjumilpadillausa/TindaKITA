@@ -117,6 +117,10 @@ A short pop up explains this the first time someone opens the app on a phone. Ch
 
 The logo has no box behind it now. Replace icon-192.png, icon-512.png, icon-180.png, icon-maskable-512.png, favicon.svg and manifest.json in GitHub. Installed copies of the app may keep the old icon until the app is removed from the phone and installed again.
 
+## The Sales page
+
+The Sales page has three tabs: Drinks, GCash and Load. Drinks shows the drink sales. GCash and Load show every transaction of that kind for the month, with the amount handled, the number of entries and the fee income. Tap a row to open it.
+
 ## Instant and live
 
 When you save a sale, GCash, load, top up or purchase, it shows in the lists and in every total at once. A small Sending tag shows until the server confirms. Every few seconds each phone does a very small check, and if someone else saved something it refreshes by itself. The Home page shows Capital left, Cash in the drawer, the GCash wallet and the Load wallet, and the profit cards show the income (drink profit plus GCash and Load fees).
@@ -124,6 +128,10 @@ When you save a sale, GCash, load, top up or purchase, it shows in the lists and
 ## If entries or fees do not show
 
 The wallet and capital numbers come from every saved row, while the lists and the profit cards show the months you are viewing. The app now works out each row's month from its saved time, so a row cannot be hidden if Google Sheets changes the month cell. The first time the new Code.gs runs it also puts the month column back to plain text. After updating, open the app twice.
+
+## Reference numbers
+
+Every GCash cash in, cash out and Load sale needs a reference number. Type it, or copy it from the GCash or load receipt and tap Paste. A reference number can only be used once. When a statement is checked, rows are matched by reference number first, and if the amount differs the row is shown as Different amount so it can be corrected.
 
 ## Photos of Mark, Yda and Mamang Judy
 

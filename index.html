@@ -273,7 +273,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.7.1',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.8.1',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -661,9 +661,28 @@ function homeView(me){
  if(rec.length)h+='<div><div class="row between" style="margin-bottom:8px"><h3>Latest sales</h3><button class="btn ghost sm" data-act="tab" data-t="sales">See all</button></div><div class="list">'+rec.map(saleRow).join('')+'</div></div>';
  return h;
 }
+function salesTabs(){
+ var s=S.ssub||'drinks';
+ return '<div class="seg" role="tablist">'+[['drinks','Drinks'],['gcash','GCash'],['load','Load']].map(function(x){return '<button class="'+(s===x[0]?'on':'')+'" data-act="ssub" data-s="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
+}
+function gSalesView(isL){
+ var all=gAll(S.month).filter(function(g){return isL?g.type==='load':g.type!=='load'}),live=all.filter(function(g){return g.status!=='void'});
+ var amt=0,fee=0,cin=0,cout=0;live.forEach(function(g){amt+=g.amount;fee+=g.fee||0;if(g.type==='in')cin+=g.amount;if(g.type==='out')cout+=g.amount});
+ var h='<div class="row between"><h2>Sales</h2>'+printBtn(true)+'</div>'+salesTabs()+monthPills();
+ h+='<div class="tiles"><div class="tile"><span class="sm muted">'+(isL?'Load sold':'Handled')+'</span><span class="v">'+php(amt)+'</span></div><div class="tile"><span class="sm muted">Transactions</span><span class="v">'+live.length+'</span></div><div class="tile"><span class="sm muted">Fee income</span><span class="v pos">'+php(fee)+'</span></div></div>';
+ if(!isL&&live.length)h+='<div class="sm muted">Cash in '+php(cin)+'. Cash out '+php(cout)+'.</div>';
+ if(live.length)h+='<div class="sm muted">Fee income is split between '+glPartners().map(function(a){return esc(a.name)}).join(' and ')+'.</div>';
+ if(!all.length)return h+'<div class="empty"><b>No '+(isL?'load sales':'GCash transactions')+' in '+esc(mlabel(S.month))+'</b><span class="sm">Record one in the GCash tab and it shows up here.</span></div>';
+ h+='<div class="stack" style="gap:6px"><h3>All '+(isL?'load sales':'GCash transactions')+'</h3>';
+ var last='';
+ all.forEach(function(g){var d=dayLabel(g.at);if(d!==last){if(last)h+='</div>';h+='<div class="day">'+esc(d)+'</div><div class="list">';last=d}h+=gRow(g)});
+ return h+'</div></div>';
+}
 function salesView(me){
+ if(S.ssub==='gcash')return gSalesView(false);
+ if(S.ssub==='load')return gSalesView(true);
  var list=liveSales(S.month),t=totals(list),every=allSales(S.month);
- var h='<div class="row between"><h2>Sales</h2>'+printBtn(true)+'</div>'+monthPills();
+ var h='<div class="row between"><h2>Sales</h2>'+printBtn(true)+'</div>'+salesTabs()+monthPills();
  h+='<div class="tiles"><div class="tile"><span class="sm muted">Sales</span><span class="v">'+php(t.revenue)+'</span></div><div class="tile"><span class="sm muted">Cost</span><span class="v">'+php(t.cost)+'</span></div><div class="tile"><span class="sm muted">Profit</span><span class="v '+(t.profit>=0?'pos':'neg')+'">'+php(t.profit)+'</span></div></div>';
  if(!every.length)return h+'<div class="empty"><b>No sales in '+esc(mlabel(S.month))+'</b><span class="sm">Sales recorded from the Home page show up here.</span></div>';
  var by={};
@@ -1088,7 +1107,7 @@ function openGcash(kind){
  '<div class="field"><label for="gc-a">'+(isL?'Load amount (PHP)':'Amount (PHP)')+'</label><input id="gc-a" type="number" inputmode="decimal" min="1" step="'+(isL?'1':'0.01')+'" data-focus></div>'+
  '<div class="field"><label for="gc-f">Fee (PHP) <button type="button" class="btn ghost sm" id="gc-chg" style="min-height:0;padding:2px 8px">Change</button></label><input id="gc-f" type="number" inputmode="decimal" min="0" step="0.01" readonly></div>'+
  '<div class="field" id="gc-nw" hidden><label for="gc-fn">Why is the fee different? (optional)</label><input id="gc-fn" type="text" maxlength="120"></div>'+
- (isL?'':'<div class="field"><label for="gc-ref">GCash reference number (optional)</label><input id="gc-ref" type="text" inputmode="numeric" maxlength="24"></div>')+
+ '<div class="field"><label for="gc-ref">'+(isL?'Load reference number':'GCash reference number')+'</label><div class="row" style="gap:8px;flex-wrap:nowrap"><input id="gc-ref" type="text" inputmode="text" maxlength="30" autocomplete="off" placeholder="Type or paste" style="flex:1;min-width:0"><button type="button" class="btn soft sm" id="gc-paste">Paste</button></div></div>'+
  '<div class="receipt" id="gc-rc"></div><div class="err" id="gc-err"></div>'+
  '<div class="wrapbtns"><button class="btn primary grow" id="gc-go">'+(isL?'Record load sale':'Record')+'</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
   function g(i){return p.querySelector('#'+i)}
@@ -1110,12 +1129,15 @@ function openGcash(kind){
   p.querySelectorAll('#gc-net button').forEach(function(b){b.addEventListener('click',function(){net=b.dataset.n;p.querySelectorAll('#gc-net button').forEach(function(x){x.classList.toggle('on',x===b)})})});
   g('gc-chg').addEventListener('click',function(){custom=true;g('gc-f').readOnly=false;g('gc-nw').hidden=false;g('gc-f').focus()});
   g('gc-a').addEventListener('input',upd);g('gc-f').addEventListener('input',upd);upd();
+  g('gc-paste').addEventListener('click',async function(){try{var t=(await navigator.clipboard.readText()||'').trim();var m=t.match(/[A-Za-z0-9]{6,30}/g);g('gc-ref').value=m?m.sort(function(a,b){return b.length-a.length})[0]:t.slice(0,30)}catch(e){toast('Press and hold the box, then tap Paste');g('gc-ref').focus()}});
   g('gc-go').addEventListener('click',async function(){
    var a=r2(g('gc-a').value),err=g('gc-err');
    if(!(a>0)){err.textContent='Enter the amount.';return}
    if(type!=='out'&&after(a)<0){err.textContent='Not enough in the '+(isL?'Load':'GCash')+' wallet. Top up first.';return}
-   var data={type:type,amount:a};
-   if(isL)data.note=net;else data.ref=g('gc-ref').value.trim();
+   var data={type:type,amount:a},rf=g('gc-ref').value.replace(/[^0-9A-Za-z]/g,'').slice(0,24);
+   if(rf.length<4){err.textContent='Enter or paste the reference number.';g('gc-ref').focus();return}
+   if((S.gcash||[]).some(function(x){return x.status!=='void'&&x.ref&&String(x.ref)===rf})){err.textContent='This reference number is already recorded.';return}
+   data.ref=rf;if(isL)data.note=net;
    if(custom||feeOf(type,a)===null){if(g('gc-f').value===''){err.textContent='Enter the fee.';return}data.fee=r2(g('gc-f').value);data.feeNote=g('gc-fn').value.trim();if(feeOf(type,a)===data.fee)delete data.feeNote}
    this.disabled=true;err.textContent='';
    submit('addGcash',data,(isL?'Load ':gTypeName(type)+' ')+php(a));closeSheet();toast(S.offline?'Saved on this phone. It sends when the internet is back.':(isL?'Load sale':gTypeName(type))+' recorded');
@@ -1667,6 +1689,7 @@ $app.addEventListener('click',async function(e){
  else if(a==='sale')openSaleDetail(id);
  else if(a==='gnew')openGcash(b.dataset.k);
  else if(a==='gsub'){S.gsub=b.dataset.s;draw()}
+ else if(a==='ssub'){S.ssub=b.dataset.s;draw()}
  else if(a==='topup')openTopup(b.dataset.w);
  else if(a==='buy')openPurchase();
  else if(a==='pitem')openPurchaseDetail(id);
