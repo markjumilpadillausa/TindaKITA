@@ -117,6 +117,10 @@ A short pop up explains this the first time someone opens the app on a phone. Ch
 
 The logo has no box behind it now. Replace icon-192.png, icon-512.png, icon-180.png, icon-maskable-512.png, favicon.svg and manifest.json in GitHub. Installed copies of the app may keep the old icon until the app is removed from the phone and installed again.
 
+## Instant and live
+
+When you save a sale, GCash, load, top up or purchase, it shows in the lists and in every total at once. A small Sending tag shows until the server confirms. Every few seconds each phone does a very small check, and if someone else saved something it refreshes by itself. The Home page shows Capital left, Cash in the drawer, the GCash wallet and the Load wallet, and the profit cards show the income (drink profit plus GCash and Load fees).
+
 ## Photos of Mark, Yda and Mamang Judy
 
 Make a folder named photos in your GitHub repository (Add file, Create new file, type photos/ in the name). Upload three pictures there with exactly these names: mark.jpg, yda.jpg and mamang-judy.jpg. They show on the login screen, Home and Profile automatically. A person can still change their own photo in Profile, and that photo is used instead. Use square pictures if you can.

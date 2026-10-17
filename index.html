@@ -258,6 +258,7 @@ html{-webkit-text-size-adjust:100%}
 .rtot{grid-column:1/-1;margin-top:-4px}
 .rextra{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px}
 #printarea{display:none}
+.walt{grid-template-columns:repeat(2,1fr)}@media (min-width:900px){.walt{grid-template-columns:repeat(4,1fr)}}
 .foot{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);text-align:center;font-size:12px;line-height:1.6;color:var(--ink2)}.foot b{color:var(--ink);letter-spacing:.02em}
 @media print{body>*:not(#printarea){display:none!important}#printarea{display:block;color:#000;background:#fff;font:12px/1.4 Arial,sans-serif;padding:0}#printarea h1{font-size:20px;margin:0}#printarea h2{font-size:14px;margin:16px 0 6px}#printarea .pm{margin:2px 0 8px;color:#444}#printarea table{width:100%;border-collapse:collapse}#printarea th,#printarea td{border-bottom:1px solid #bbb;padding:4px 6px;text-align:left}#printarea .r{text-align:right}#printarea tr{break-inside:avoid}}
 @media (min-width:900px){.top{position:static}.stat{position:fixed;top:12px;right:20px;z-index:6;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}.syncp{max-width:none}}
@@ -272,12 +273,12 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.6.1',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.7.0',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
 var TZ='Asia/Manila';
-var POLL_MS=25000;
+var POLL_MS=5000;
 
 var $app=document.getElementById('app'), $sheet=document.getElementById('sheet'), $toast=document.getElementById('toast');
 
@@ -375,12 +376,13 @@ async function api(action,data){
 function applyState(st,fromCache){
  var sig=JSON.stringify(st,function(k,v){return k==='serverTime'?undefined:v});var changed=sig!==S.sig||S.offline;S.sig=sig;
  S.me=st.me;S.accounts=st.accounts||[];S.items=(st.items||[]).slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
- S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rates=st.rates||[];S.rateHist=st.rateHist||{gcash:[],load:[]};S.ratesMeta=st.ratesMeta||{};S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
+ S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rev=st.rev||'';S.rates=st.rates||[];S.rateHist=st.rateHist||{gcash:[],load:[]};S.ratesMeta=st.ratesMeta||{};S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
+ overlay();
  try{var c=JSON.parse(JSON.stringify(st));c._savedAt=fromCache?(st._savedAt||0):Date.now();c.accounts.forEach(function(a){delete a.pin});c.logins=[];localStorage.setItem('tindakita.state',JSON.stringify(c))}catch(e){}
  if(changed)render();
 }
 async function sync(manual){
- if(!S.token||S.syncing)return;
+ if(!S.token||S.syncing||(flushing&&!manual))return;
  S.syncing=true;if(manual)render();
  try{await api('sync');if(manual)toast('Up to date')}
  catch(e){if(e.code==='network'){S.offline=true;if(manual)toast(e.message)}else if(manual)toast(e.message)}
@@ -389,9 +391,56 @@ async function sync(manual){
 /* ================= offline queue: records are saved on the phone first, then sent ================= */
 function obSave(l){S.outbox=l;try{localStorage.setItem('tindakita.outbox',JSON.stringify(l))}catch(e){}}
 function submit(action,data,label){
- var me=cur();
- obSave(S.outbox.concat([{cid:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8),action:action,data:data,at:Date.now(),label:label,me:me?me.id:''}]));
+ var me=cur(),o={cid:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8),action:action,data:data,at:Date.now(),label:label,me:me?me.id:''};
+ obSave(S.outbox.concat([o]));
+ overlayOne(o);
  draw();flush();
+}
+/* ===== instant view: a saved entry shows in the lists and totals at once, before the server answers ===== */
+function monthOfTs(t){return new Date(t).toLocaleDateString('en-CA',{timeZone:TZ}).slice(0,7)}
+function splitShares(v,ids){
+ var n=ids.length,out={};if(!n)return out;
+ var c=Math.round(v*100),q=Math.trunc(c/n),r=c-q*n,lead=ids.indexOf('yda')>-1?'yda':ids[0];
+ ids.forEach(function(i){out[i]=q/100});
+ if(r>0)out[lead]=(q+r)/100;else if(r<0){var o=ids.filter(function(x){return x!==lead})[0]||lead;out[o]=(q+r)/100}
+ return out;
+}
+function overlay(){
+ if(!S.me)return;
+ if(S.money)S.money=JSON.parse(JSON.stringify(S.money));
+ S.outbox.forEach(function(o){if(o.me===S.me.id&&o.cid!==S.inflight)overlayOne(o)});
+}
+function overlayOne(o){
+ var me=S.me,m=S.money,d=o.data||{},id='pending-'+o.cid,mo=monthOfTs(o.at);if(!me)return;
+ var ids=(S.sales||[]).concat(S.gcash||[],S.topups||[],S.purchases||[]);
+ if(ids.some(function(x){return x.id===id}))return;
+ function bump(k,v){if(m&&typeof m[k]==='number')m[k]=r2(m[k]+v)}
+ if(o.action==='addSale'){
+  var it=S.items.filter(function(x){return x.id===d.itemId})[0];if(!it)return;
+  var qty=Math.floor(Number(d.qty)||0),unit=d.unit==='case'?'case':'bottle',bpc=Number(it.bottlesPerCase)||1,cc=Number(it.costCase)||0,pb=Number(it.priceBottle)||0,pc=Number(it.priceCase)>0?Number(it.priceCase):pb*bpc;
+  var rev=r2(unit==='case'?pc*qty:pb*qty),cost=r2(unit==='case'?cc*qty:cc/bpc*qty),profit=r2(rev-cost),bt=unit==='case'?bpc*qty:qty;
+  var sh=splitShares(profit,partners().map(function(a){return a.id}));
+  S.sales=S.sales.concat([{id:id,at:o.at,month:mo,itemId:it.id,itemName:it.name,ml:it.ml,unit:unit,qty:qty,bottles:bt,revenue:rev,cost:cost,profit:profit,shares:sh,byId:me.id,byName:me.name,status:'ok',editCount:0,pending:true,orig:{qty:qty,revenue:rev,cost:cost,profit:profit,shares:sh}}]);
+  bump('cashExpected',rev);
+  if(m&&m.stock){var k=m.stock[it.id]||(m.stock[it.id]={bought:0,sold:0,left:0});k.sold+=bt;k.left=k.bought-k.sold}
+ }else if(o.action==='addGcash'){
+  var type=d.type==='out'?'out':d.type==='load'?'load':'in',a=r2(d.amount),fee=(d.fee!==undefined&&d.fee!==null&&d.fee!=='')?r2(d.fee):feeOf(type,a);if(fee===null||!(a>0))return;
+  var gs=glPartners().map(function(x){return x.id}),sh2=splitShares(fee,gs);
+  S.gcash=S.gcash.concat([{id:id,at:o.at,month:mo,type:type,amount:a,fee:fee,feeSource:d.fee!==undefined?'manual':'table',feeNote:d.feeNote||'',ref:d.ref||'',note:d.note||'',shares:sh2,byId:me.id,byName:me.name,status:'ok',source:'manual',editCount:0,pending:true,orig:{amount:a,fee:fee,shares:sh2}}]);
+  if(type==='in'){bump('gcashBal',-a);bump('cashExpected',a+fee)}else if(type==='out'){bump('gcashBal',a);bump('cashExpected',fee-a)}else{bump('loadBal',-a);bump('cashExpected',a+fee)}
+ }else if(o.action==='addTopup'){
+  var w=d.wallet==='load'?'load':'gcash',am=r2(d.amount),fd=d.fund==='drawer'||d.fund==='own'?d.fund:'capital';if(!(am>0))return;
+  S.topups=S.topups.concat([{id:id,at:o.at,month:mo,wallet:w,amount:am,note:d.note||'',byId:me.id,byName:me.name,status:'ok',source:'manual',fund:fd,pending:true}]);
+  bump(w==='load'?'topL':'topG',am);bump(w==='load'?'loadBal':'gcashBal',am);
+  if(fd==='capital'){bump('topCapital',am);bump('capitalLeft',-am);bump('cashExpected',-am)}else if(fd==='drawer'){bump('topDrawer',am);bump('cashExpected',-am)}else bump('topOwn',am);
+ }else if(o.action==='addPurchase'){
+  var it2=d.itemId?S.items.filter(function(x){return x.id===d.itemId})[0]:null,amt=r2(d.amount),qn=Math.floor(Number(d.qty)||1),un=d.unit==='case'?'case':'bottle';
+  if(d.itemId&&!it2)return;
+  var bt2=it2?(un==='case'?(Number(it2.bottlesPerCase)||1)*qn:qn):0;
+  S.purchases=S.purchases.concat([{id:id,at:o.at,month:mo,itemId:it2?it2.id:'',itemName:it2?it2.name:(d.label||'Purchase'),unit:it2?un:'',qty:it2?qn:1,bottles:bt2,amount:amt,byId:me.id,byName:me.name,status:'ok',pending:true}]);
+  bump('drinksBought',amt);bump('capitalLeft',-amt);bump('cashExpected',-amt);
+  if(it2&&m&&m.stock){var k2=m.stock[it2.id]||(m.stock[it2.id]={bought:0,sold:0,left:0});k2.bought+=bt2;k2.left=k2.bought-k2.sold}
+ }
 }
 var flushing=false;
 async function flush(){
@@ -401,14 +450,15 @@ async function flush(){
   while(true){
    var it=S.outbox.filter(function(o){return o.me===S.me.id})[0];
    if(!it)break;
-   try{await api(it.action,Object.assign({},it.data,{cid:it.cid,clientAt:it.at}));obSave(S.outbox.filter(function(o){return o.cid!==it.cid}))}
+   try{S.inflight=it.cid;await api(it.action,Object.assign({},it.data,{cid:it.cid,clientAt:it.at}));S.inflight='';obSave(S.outbox.filter(function(o){return o.cid!==it.cid}))}
    catch(e){
+    S.inflight='';
     if(e.code==='network'){S.offline=true;break}
     if(e.code==='unauthorized'||e.code==='mustchange')break;
-    obSave(S.outbox.filter(function(o){return o.cid!==it.cid}));S.failed.push({label:it.label,msg:e.message});
+    obSave(S.outbox.filter(function(o){return o.cid!==it.cid}));S.failed.push({label:it.label,msg:e.message});S.needSync=true;
    }
   }
- }finally{flushing=false;draw()}
+ }finally{flushing=false;draw();if(S.needSync){S.needSync=false;sync(false)}}
 }
 function clockText(){return new Date().toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:TZ})+' · '+timeLabel(Date.now())}
 function syncText(){
@@ -418,8 +468,8 @@ function syncText(){
  return 'Online · '+(n?'sending '+n+' · ':'')+'Synced '+(S.syncedAt?timeLabel(S.syncedAt):'now');
 }
 function pendingHtml(){
- var h='';
- if(S.outbox.length)h+='<div class="note warn"><b>'+S.outbox.length+' waiting to send</b>'+S.outbox.map(function(o){return '<div class="sm">'+esc(o.label)+' · '+esc(timeLabel(o.at))+'</div>'}).join('')+'</div>';
+ var h='',off=S.offline||!navigator.onLine,old=S.outbox.filter(function(o){return off||Date.now()-o.at>8000});
+ if(old.length)h+='<div class="note warn"><b>'+old.length+' waiting to send</b>'+old.map(function(o){return '<div class="sm">'+esc(o.label)+' · '+esc(timeLabel(o.at))+'</div>'}).join('')+'</div>';
  S.failed.forEach(function(f,i){h+='<div class="note warn"><b>Not saved:</b> '+esc(f.label)+'. '+esc(f.msg)+' <button class="btn ghost sm" data-act="dismissfail" data-id="'+i+'">OK</button></div>'});
  return h;
 }
@@ -447,7 +497,12 @@ async function init(){
    else{S.ready=true;draw()}
   }
  }else{await loadPublic()}
- setInterval(function(){if(!document.hidden&&S.token&&S.me){if(S.outbox.length)flush();else if(!$sheet.firstChild)sync(false)}},POLL_MS);
+ setInterval(async function(){
+  if(document.hidden||!S.token||!S.me||S.syncing||flushing)return;
+  if(S.outbox.length){flush();return}
+  if(S.offline||!navigator.onLine)return;
+  try{var v=await api('ver');if(v.rev!==S.rev&&!flushing)sync(false)}catch(e){if(e.code==='network'){S.offline=true;draw()}}
+ },POLL_MS);
  setInterval(function(){var c=document.getElementById('clk');if(c)c.textContent=clockText()},15000);
  document.addEventListener('visibilitychange',function(){if(!document.hidden)sync(false)});
  window.addEventListener('online',function(){S.offline=false;draw();flush().then(function(){sync(false)})});
@@ -572,7 +627,7 @@ function gridHtml(){
 }
 function saleRow(s){
  var v=s.status==='void',unit=s.unit==='case'?(s.qty===1?'case':'cases'):(s.qty===1?'bottle':'bottles');
- var chips=(s.editCount>0?'<span class="chip warn">Edited</span>':'')+(v?'<span class="chip admin">Voided</span>':'');
+ var chips=(s.pending?'<span class="chip">Sending</span>':'')+(s.editCount>0?'<span class="chip warn">Edited</span>':'')+(v?'<span class="chip admin">Voided</span>':'');
  return '<button class="li lib'+(v?' voided':'')+'" data-act="sale" data-id="'+esc(s.id)+'"><div class="grow"><div><b>'+esc(s.itemName)+'</b> <span class="muted">x '+s.qty+' '+unit+'</span> '+chips+'</div><div class="sm muted">'+timeLabel(s.at)+' by '+esc(s.byName)+'</div></div>'+
   '<div style="text-align:right"><div class="amt amt1">'+php(s.revenue)+'</div><div class="amt sm '+(s.profit>=0?'pos':'neg')+'">'+(s.profit>=0?'+':'')+php(s.profit)+'</div></div></button>';
 }
@@ -585,8 +640,8 @@ function homeView(me){
  var list=liveSales(S.month),t=totals(list),ps=partners(),gps=glPartners(),canEdit=me.role!=='viewer',gl=gLive(S.month),gf=gFees(gl),total=r2(t.profit+gf);
  var h='<div class="row" style="gap:12px">'+av(me,48)+'<div class="grow"><div class="sm muted">'+greet()+'</div><h2>'+esc(me.name)+'</h2></div></div>'+monthPills();
  h+='<div class="hero"><div class="lbl">'+esc(mlabel(S.month))+' profit (kita)</div><div class="big num">'+php(total)+'</div>'+
-  '<div class="sub"><span>Drinks <b class="num">'+php(t.profit)+'</b></span><span>GCash and Load fees <b class="num">'+php(gf)+'</b></span><span>Sales <b class="num">'+php(t.revenue)+'</b></span><span><b class="num">'+t.bottles+'</b> bottles sold</span>'+(S.capital>0?'<span>Capital <b class="num">'+php(S.capital)+'</b></span>':'')+'</div></div>';
- h+=walletTiles();
+  '<div class="sub"><span>Drinks <b class="num">'+php(t.profit)+'</b></span><span>GCash and Load fees <b class="num">'+php(gf)+'</b></span><span>Sales <b class="num">'+php(t.revenue)+'</b></span><span><b class="num">'+t.bottles+'</b> bottles sold</span>'+(S.capital>0?'<span>Capital left <b class="num">'+php(S.money?S.money.capitalLeft:S.capital)+'</b></span>':'')+'</div></div>';
+ h+=walletTiles(true);
  if(canEdit&&S.inbox.length)h+='<button class="note warn" style="text-align:left;border:0" data-act="tab" data-t="gcash"><b>'+S.inbox.length+' new GCash message'+(S.inbox.length===1?'':'s')+' waiting.</b> Tap to review.</button>';
  var people=S.accounts.filter(function(a){return a.partner!==false||a.glPartner!==false}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
  people.sort(function(a,b){return (b.id===me.id)-(a.id===me.id)});
@@ -943,15 +998,16 @@ function loadFee(a,at){
 }
 function feeOf(type,a,at){return type==='load'?loadFee(a,at):feeFor(a,at)}
 function walletBal(w){return S.money?(w==='load'?S.money.loadBal:S.money.gcashBal):0}
-function walletTiles(){
+function walletTiles(full){
  if(!S.money)return '';
  function t(w,n){var b=walletBal(w),low=b<1000;return '<div class="tile"><span class="sm muted">'+n+' wallet</span><span class="v '+(b<0?'neg':'')+'">'+php(b)+'</span>'+(low?'<span class="chip warn" style="justify-self:start">'+(b<=0?'Empty':'Low')+'</span>':'')+'</div>'}
- return '<div class="tiles" style="grid-template-columns:repeat(2,1fr)">'+t('gcash','GCash')+t('load','Load')+'</div>';
+ var m=S.money,extra=full?'<div class="tile"><span class="sm muted">Capital left</span><span class="v '+(m.capitalLeft<0?'neg':'')+'">'+php(m.capitalLeft)+'</span></div><div class="tile"><span class="sm muted">Cash in the drawer</span><span class="v '+(m.cashExpected<0?'neg':'')+'">'+php(m.cashExpected)+'</span></div>':'';
+ return '<div class="tiles walt">'+extra+t('gcash','GCash')+t('load','Load')+'</div>';
 }
 function canTouchG(g){return canTouch(g)}
 
 function gRow(g){
- var v=g.status==='void',chips=(g.editCount>0?'<span class="chip warn">Edited</span>':'')+(v?'<span class="chip admin">Voided</span>':'')+(g.source==='statement'?'<span class="chip ok">Statement</span>':'')+(g.feeSource==='manual'?'<span class="chip">Custom fee</span>':'');
+ var v=g.status==='void',chips=(g.pending?'<span class="chip">Sending</span>':'')+(g.editCount>0?'<span class="chip warn">Edited</span>':'')+(v?'<span class="chip admin">Voided</span>':'')+(g.source==='statement'?'<span class="chip ok">Statement</span>':'')+(g.feeSource==='manual'?'<span class="chip">Custom fee</span>':'');
  var isL=g.type==='load';
  return '<button class="li lib'+(v?' voided':'')+'" data-act="gitem" data-id="'+esc(g.id)+'"><div class="grow"><div><b>'+gTypeName(g.type)+'</b> <span class="muted num">'+php(g.amount)+'</span> '+chips+'</div><div class="sm muted">'+timeLabel(g.at)+' by '+esc(g.byName)+(isL&&g.note?' · '+esc(g.note):'')+(g.ref?' · Ref '+esc(g.ref):'')+'</div></div>'+
   '<div style="text-align:right"><div class="amt amt1 pos">+'+php(g.fee)+'</div><div class="sm muted">fee</div></div></button>';
@@ -1585,6 +1641,7 @@ $app.addEventListener('change',async function(e){
 $app.addEventListener('click',async function(e){
  var b=e.target.closest('[data-act]');if(!b||b.tagName==='INPUT')return;
  var a=b.dataset.act,id=b.dataset.id,me=cur();
+ if(id&&String(id).indexOf('pending-')===0&&['sale','gitem','titem','pitem'].indexOf(a)>-1){toast('Still sending. Try again in a moment.');return}
  if(a==='pick')startPin(id);
  else if(a==='digit')padPress(b.dataset.d);
  else if(a==='back')padPress('back');
