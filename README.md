@@ -87,6 +87,21 @@ Viewer: see the drinks, prices, sales, and their own share. A Viewer cannot reco
 4. Edit and void work like sales: a reason is required, the time and name are stamped, and the original stays visible.
 5. Admin, Settings has the rate card. Check every line against your printed card and fix any that are wrong. One line per range: first amount, last amount, fee.
 
+## Working without internet
+
+1. The app opens at once from the copy saved on the phone, so it does not wait for the internet when a customer is waiting.
+2. The top of the screen always shows the date, the time, and whether the phone is Online or Offline, with the last sync time. Screenshots show the time too.
+3. Without internet you can still record sales, GCash, load, top ups, and purchases. They are saved on the phone, listed as waiting to send, and sent by themselves when the signal returns. The time you entered is kept, and the server also stamps when it received the entry.
+4. Edits and voids need internet.
+
+## Who shares what
+
+Drinks profit is split among the people marked Shares drinks (Mark, Yda, Mamang Judy). GCash and Load fee income is split among the people marked Shares GCash and Load (Mark and Yda). Admin, Accounts has both tick boxes for every person. A change only affects entries recorded after it.
+
+## Reading GCash and bank texts
+
+A web page cannot read text messages, so a small free app on the phone forwards them. Admin, Settings, Read GCash and bank texts shows the secret key, the link to use, and the Android and iPhone steps. Each text is read for the amount, the reference number, and whether money came in or went out. Cash in, cash out, and top ups are added by themselves when Add automatically is ticked, or wait for a tap under New messages in the GCash tab. A text that matches an entry already typed in is linked to it instead of being added twice. Check the first few days to make sure your texts are read correctly.
+
 ## Money, wallets, and load
 
 1. Money tab: shows the capital, what was spent on drinks and other things, what was put into the GCash and Load wallets, and the capital left. Everything updates by itself.

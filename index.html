@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+<link rel="preconnect" href="https://script.google.com"><link rel="preconnect" href="https://drive.google.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Layout: phone-first store app. Header, month pills, profit hero, share card, photo catalogue grid, bottom tab bar. Bottom sheets for selling and forms. Receipt styling for the sale and share breakdown. */
 :root{
@@ -234,6 +234,24 @@ html{-webkit-text-size-adjust:100%}
   .tiles{max-width:560px}
 }
 
+/* v3 look: no boxed icons, status bar, avatars */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--bg);padding-block:8px 10px;align-items:flex-start;gap:10px}
+.stat{display:grid;gap:2px;justify-items:end;min-width:0}
+.clock{font-size:12px;font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.syncp{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;padding:2px 0;font-size:12px;font-weight:700;color:var(--ink);min-height:0;max-width:62vw}
+.syncp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:#1FA37A;display:inline-block;flex:none}
+.dot.off{background:var(--cap)}.dot.busy{background:#E0A100;animation:tkpulse 1s infinite}
+@keyframes tkpulse{50%{opacity:.3}}
+.nav button{background:transparent!important;border-radius:0;position:relative}
+.nav button.on{color:var(--cap)}
+.nav button.on::before{content:"";position:absolute;top:-6px;left:24%;right:24%;height:3px;border-radius:0 0 3px 3px;background:var(--cap)}
+.nav button .ic{stroke-width:1.8}
+.iconbtn{background:transparent!important}
+.avbtn{position:relative;border:0;background:transparent;padding:0;border-radius:50%;flex:none;display:block}
+.avcam{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:var(--cap);color:var(--cap-ink);display:grid;place-items:center;border:2px solid var(--bg)}
+.avatar{overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+@media (min-width:900px){.nav button.on::before{top:22%;bottom:22%;left:0;right:auto;width:3px;height:auto;border-radius:0 3px 3px 0}}
 </style>
 </head>
 <body>
@@ -267,6 +285,10 @@ function device(){var u=navigator.userAgent||'';if(/iPhone|iPad|iPod/.test(u))re
 function initial(n){return esc((String(n||'?').trim()[0]||'?').toUpperCase())}
 function photoUrl(it){return it&&it.photoId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(it.photoId)+'&sz=w480&v='+(it.photoVer||0):''}
 var ICONS={
+ cash:'<rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M5.5 9.5v.01M18.5 14.5v.01"/>',
+ wallet:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18v3.5"/><path d="M3 7.5V18a2 2 0 0 0 2 2h14a1.5 1.5 0 0 0 1.5-1.5V16"/><path d="M21 9.5h-4a2.250 2.250 0 0 0 0 4.500h4z"/>',
+ cart:'<circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.500 3.500h3l2.600 12a2 2 0 0 0 2 1.600h7.500a2 2 0 0 0 2-1.500L21 7.500H6.200"/>',
+ person:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
  home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
  sales:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -289,9 +311,10 @@ function cap(sz){var n=12,p=[];for(var i=0;i<n*2;i++){var a=Math.PI*i/n-Math.PI/
 
 /* ================= state ================= */
 var S={ready:false,setupNeeded:API_URL.indexOf('PASTE_')===0,pubAccounts:[],loadErr:'',
- token:'',me:null,accounts:[],items:[],sales:[],log:[],logins:[],gcash:[],gcashLog:[],rates:[],imports:[],money:null,topups:[],purchases:[],loadCfg:{step:50,fee:5},gsub:'gcash',capital:0,syncedAt:0,offline:!navigator.onLine,syncing:false,
+ token:'',me:null,accounts:[],items:[],sales:[],log:[],logins:[],gcash:[],gcashLog:[],rates:[],imports:[],money:null,topups:[],purchases:[],loadCfg:{step:50,fee:5},gsub:'gcash',inbox:[],sms:null,outbox:[],failed:[],capital:0,syncedAt:0,offline:!navigator.onLine,syncing:false,
  tab:'home',month:mkey(Date.now()),adminTab:'accounts',q:'',flow:null,reveal:{},notice:''};
 try{S.token=localStorage.getItem('tindakita.token')||''}catch(e){}
+try{S.outbox=JSON.parse(localStorage.getItem('tindakita.outbox')||'[]')}catch(e){S.outbox=[]}
 function saveToken(){try{if(S.token)localStorage.setItem('tindakita.token',S.token);else{localStorage.removeItem('tindakita.token');localStorage.removeItem('tindakita.state')}}catch(e){}}
 function cur(){return S.me}
 function byId(id){var a=S.accounts.concat(S.pubAccounts);for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null}
@@ -336,11 +359,11 @@ async function api(action,data){
  if(j.state)applyState(j.state);
  return j;
 }
-function applyState(st){
+function applyState(st,fromCache){
  var sig=JSON.stringify(st,function(k,v){return k==='serverTime'?undefined:v});var changed=sig!==S.sig||S.offline;S.sig=sig;
  S.me=st.me;S.accounts=st.accounts||[];S.items=(st.items||[]).slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
- S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rates=st.rates||[];S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=Date.now();S.offline=false;
- try{var c=JSON.parse(JSON.stringify(st));c.accounts.forEach(function(a){delete a.pin});c.logins=[];localStorage.setItem('tindakita.state',JSON.stringify(c))}catch(e){}
+ S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rates=st.rates||[];S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
+ try{var c=JSON.parse(JSON.stringify(st));c._savedAt=fromCache?(st._savedAt||0):Date.now();c.accounts.forEach(function(a){delete a.pin});c.logins=[];localStorage.setItem('tindakita.state',JSON.stringify(c))}catch(e){}
  if(changed)render();
 }
 async function sync(manual){
@@ -349,6 +372,43 @@ async function sync(manual){
  try{await api('sync');if(manual)toast('Up to date')}
  catch(e){if(e.code==='network'){S.offline=true;if(manual)toast(e.message)}else if(manual)toast(e.message)}
  S.syncing=false;render();
+}
+/* ================= offline queue: records are saved on the phone first, then sent ================= */
+function obSave(l){S.outbox=l;try{localStorage.setItem('tindakita.outbox',JSON.stringify(l))}catch(e){}}
+function submit(action,data,label){
+ var me=cur();
+ obSave(S.outbox.concat([{cid:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,8),action:action,data:data,at:Date.now(),label:label,me:me?me.id:''}]));
+ draw();flush();
+}
+var flushing=false;
+async function flush(){
+ if(flushing||!S.token||!S.me||S.offline||!navigator.onLine)return;
+ flushing=true;
+ try{
+  while(true){
+   var it=S.outbox.filter(function(o){return o.me===S.me.id})[0];
+   if(!it)break;
+   try{await api(it.action,Object.assign({},it.data,{cid:it.cid,clientAt:it.at}));obSave(S.outbox.filter(function(o){return o.cid!==it.cid}))}
+   catch(e){
+    if(e.code==='network'){S.offline=true;break}
+    if(e.code==='unauthorized'||e.code==='mustchange')break;
+    obSave(S.outbox.filter(function(o){return o.cid!==it.cid}));S.failed.push({label:it.label,msg:e.message});
+   }
+  }
+ }finally{flushing=false;draw()}
+}
+function clockText(){return new Date().toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:TZ})+' · '+timeLabel(Date.now())}
+function syncText(){
+ var off=S.offline||!navigator.onLine,n=S.outbox.length;
+ if(off)return 'Offline'+(n?' · '+n+' waiting to send':' · saved on this phone');
+ if(S.syncing)return 'Syncing...';
+ return 'Online · '+(n?'sending '+n+' · ':'')+'Synced '+(S.syncedAt?timeLabel(S.syncedAt):'now');
+}
+function pendingHtml(){
+ var h='';
+ if(S.outbox.length)h+='<div class="note warn"><b>'+S.outbox.length+' waiting to send</b>'+S.outbox.map(function(o){return '<div class="sm">'+esc(o.label)+' · '+esc(timeLabel(o.at))+'</div>'}).join('')+'</div>';
+ S.failed.forEach(function(f,i){h+='<div class="note warn"><b>Not saved:</b> '+esc(f.label)+'. '+esc(f.msg)+' <button class="btn ghost sm" data-act="dismissfail" data-id="'+i+'">OK</button></div>'});
+ return h;
 }
 async function loadPublic(){
  try{var j=await api('accounts');S.pubAccounts=j.accounts;S.loadErr=''}
@@ -359,6 +419,11 @@ async function init(){
  draw();
  if(S.setupNeeded){S.ready=true;draw();return}
  if(S.token){
+  var cached=null;try{cached=JSON.parse(localStorage.getItem('tindakita.state')||'null')}catch(e){}
+  if(cached&&cached.me){
+   applyState(cached,true);S.offline=!navigator.onLine;S.ready=true;draw();
+   sync(false).then(function(){flush()});
+  }else
   try{await api('sync');S.ready=true;draw()}
   catch(e){
    if(e.code==='network'){
@@ -369,9 +434,10 @@ async function init(){
    else{S.ready=true;draw()}
   }
  }else{await loadPublic()}
- setInterval(function(){if(!document.hidden&&S.token&&S.me&&!$sheet.firstChild)sync(false)},POLL_MS);
+ setInterval(function(){if(!document.hidden&&S.token&&S.me){if(S.outbox.length)flush();else if(!$sheet.firstChild)sync(false)}},POLL_MS);
+ setInterval(function(){var c=document.getElementById('clk');if(c)c.textContent=clockText()},15000);
  document.addEventListener('visibilitychange',function(){if(!document.hidden)sync(false)});
- window.addEventListener('online',function(){S.offline=false;sync(false);draw()});
+ window.addEventListener('online',function(){S.offline=false;draw();flush().then(function(){sync(false)})});
  window.addEventListener('offline',function(){S.offline=true;draw()});
 }
 
@@ -379,7 +445,7 @@ async function init(){
 function startPin(id){S.flow={step:'pin',id:id,entry:'',err:'',busy:false};S.notice='';draw()}
 function startChangePin(){var a=cur();if(!a)return;S.flow={step:'new1',id:a.id,entry:'',err:'',first:'',change:true};draw()}
 function flowCancel(){var f=S.flow;if(!f)return;if(f.forced){logout();return}S.flow=null;draw()}
-function logout(){S.token='';S.me=null;S.flow=null;S.tab='home';S.accounts=[];S.sales=[];S.gcash=[];S.gcashLog=[];S.imports=[];S.money=null;S.topups=[];S.purchases=[];S.items=[];S.log=[];S.logins=[];saveToken();loadPublic()}
+function logout(){S.token='';S.me=null;S.flow=null;S.tab='home';S.accounts=[];S.outbox=[];obSave([]);S.sales=[];S.gcash=[];S.gcashLog=[];S.imports=[];S.money=null;S.topups=[];S.purchases=[];S.items=[];S.log=[];S.logins=[];saveToken();loadPublic()}
 async function submitFlow(){
  var f=S.flow;if(!f||f.busy)return;
  if(f.step==='pin'){
@@ -497,17 +563,24 @@ function saleRow(s){
  return '<button class="li lib'+(v?' voided':'')+'" data-act="sale" data-id="'+esc(s.id)+'"><div class="grow"><div><b>'+esc(s.itemName)+'</b> <span class="muted">x '+s.qty+' '+unit+'</span> '+chips+'</div><div class="sm muted">'+timeLabel(s.at)+' by '+esc(s.byName)+'</div></div>'+
   '<div style="text-align:right"><div class="amt amt1">'+php(s.revenue)+'</div><div class="amt sm '+(s.profit>=0?'pos':'neg')+'">'+(s.profit>=0?'+':'')+php(s.profit)+'</div></div></button>';
 }
+function glPartners(){return S.accounts.filter(function(a){return a.glPartner!==false}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)})}
+function av(a,sz){
+ sz=sz||38;var u=a&&a.photoId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(a.photoId)+'&sz=w256&v='+(a.photoVer||0):'';
+ return '<span class="avatar" style="width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*.42)+'px">'+(u?'<img src="'+esc(u)+'" alt="" data-fb="av" data-i="'+initial(a&&a.name)+'" referrerpolicy="no-referrer">':initial(a&&a.name))+'</span>';
+}
 function homeView(me){
- var list=liveSales(S.month),t=totals(list),ps=partners(),canEdit=me.role!=='viewer',gl=gLive(S.month),gf=gFees(gl),total=r2(t.profit+gf);
- var h='<div><h2>'+greet()+', '+esc(me.name)+'</h2></div>'+monthPills();
+ var list=liveSales(S.month),t=totals(list),ps=partners(),gps=glPartners(),canEdit=me.role!=='viewer',gl=gLive(S.month),gf=gFees(gl),total=r2(t.profit+gf);
+ var h='<div class="row" style="gap:12px">'+av(me,48)+'<div class="grow"><div class="sm muted">'+greet()+'</div><h2>'+esc(me.name)+'</h2></div></div>'+monthPills();
  h+='<div class="hero"><div class="lbl">'+esc(mlabel(S.month))+' profit (kita)</div><div class="big num">'+php(total)+'</div>'+
-  '<div class="sub"><span>Drinks <b class="num">'+php(t.profit)+'</b></span>'+(gl.length||gf?'<span>GCash fees <b class="num">'+php(gf)+'</b></span>':'')+'<span>Sales <b class="num">'+php(t.revenue)+'</b></span><span>Cost <b class="num">'+php(t.cost)+'</b></span><span><b class="num">'+t.bottles+'</b> bottles sold</span>'+(S.capital>0?'<span>Capital <b class="num">'+php(S.capital)+'</b></span>':'')+'</div></div>';
+  '<div class="sub"><span>Drinks <b class="num">'+php(t.profit)+'</b></span><span>GCash and Load <b class="num">'+php(gf)+'</b></span><span>Sales <b class="num">'+php(t.revenue)+'</b></span><span><b class="num">'+t.bottles+'</b> bottles sold</span>'+(S.capital>0?'<span>Capital <b class="num">'+php(S.capital)+'</b></span>':'')+'</div></div>';
  h+=walletTiles();
- h+='<div><div class="row between" style="margin-bottom:8px"><h3>Share of the profit</h3><span class="sm muted">Split equally in '+ps.length+'</span></div><div class="list">';
- if(!ps.length)h+='<div class="li muted">No one is set to share the income yet.</div>';
- ps.forEach(function(a){
-  var mine=a.id===me.id;
-  h+='<div class="li'+(mine?' me':'')+'"><span class="avatar">'+initial(a.name)+'</span><span class="grow"><b>'+esc(a.name)+'</b>'+(mine?' <span class="chip ok">You</span>':'')+'</span><span class="amt">'+php(r2(shareOf(list,a.id)+gShare(gl,a.id)))+'</span></div>';
+ if(canEdit&&S.inbox.length)h+='<button class="note warn" style="text-align:left;border:0" data-act="tab" data-t="gcash"><b>'+S.inbox.length+' new GCash message'+(S.inbox.length===1?'':'s')+' waiting.</b> Tap to review.</button>';
+ var people=S.accounts.filter(function(a){return a.partner!==false||a.glPartner!==false}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
+ h+='<div><div class="row between" style="margin-bottom:8px"><h3>Share of the profit</h3></div><p class="sm muted" style="margin:0 0 8px">Drinks are split '+ps.length+' ways. GCash and Load are split '+gps.length+' ways.</p><div class="list">';
+ if(!people.length)h+='<div class="li muted">No one is set to share the income yet.</div>';
+ people.forEach(function(a){
+  var mine=a.id===me.id,d=a.partner!==false?shareOf(list,a.id):0,g=a.glPartner!==false?gShare(gl,a.id):0;
+  h+='<div class="li'+(mine?' me':'')+'">'+av(a,38)+'<span class="grow"><b>'+esc(a.name)+'</b>'+(mine?' <span class="chip ok">You</span>':'')+'<div class="sm muted">'+(a.partner!==false?'Drinks '+php(d):'')+(a.partner!==false&&a.glPartner!==false?' · ':'')+(a.glPartner!==false?'GCash and Load '+php(g):'')+'</div></span><span class="amt">'+php(r2(d+g))+'</span></div>';
  });
  h+='</div></div>';
  h+='<div class="stack" style="gap:10px"><div class="cat-head"><h2>Drinks</h2>'+(canEdit?'<button class="btn primary sm" data-act="additem">'+ic('plus',18)+'Add drink</button>':'')+'</div>';
@@ -537,11 +610,12 @@ function salesView(me){
  return h+'</div></div>';
 }
 function profileView(me){
- var ps=partners(),isP=ps.some(function(a){return a.id===me.id});
- var hist=months6().map(function(m){return {m:m,v:r2(shareOf(liveSales(m),me.id)+gShare(gLive(m),me.id))}});
+ var ps=partners(),isP=me.partner!==false,isG=me.glPartner!==false;
+ var hist=months6().map(function(m){return {m:m,d:isP?shareOf(liveSales(m),me.id):0,g:isG?gShare(gLive(m),me.id):0}});
+ hist.forEach(function(x){x.v=r2(x.d+x.g)});
  var max=Math.max.apply(null,hist.map(function(x){return Math.abs(x.v)}).concat([1]));
- var h='<div class="row" style="gap:14px"><span class="avatar lg">'+initial(me.name)+'</span><div class="grow"><h2>'+esc(me.name)+'</h2><span class="chip '+(me.role==='admin'?'admin':me.role==='user'?'user':'')+'">'+esc(me.role)+'</span></div></div>';
- h+='<div class="hero"><div class="lbl">Your share, '+esc(mlabel(hist[0].m))+'</div><div class="big num">'+php(hist[0].v)+'</div><div class="sub">'+(isP?'<span>Equal share of drinks profit and GCash fees</span>':'<span>You are not set to receive a share</span>')+'</div></div>';
+ var h='<div class="row" style="gap:14px"><button class="avbtn" data-act="photo" aria-label="Change my photo">'+av(me,72)+'<span class="avcam">'+ic('camera',14)+'</span></button><input id="pf-file" type="file" accept="image/*" hidden><div class="grow"><h2>'+esc(me.name)+'</h2><button class="btn ghost sm" data-act="photo" style="padding-left:0">Change photo</button></div></div>';
+ h+='<div class="hero"><div class="lbl">Your share, '+esc(mlabel(hist[0].m))+'</div><div class="big num">'+php(hist[0].v)+'</div><div class="sub">'+(isP?'<span>Drinks <b class="num">'+php(hist[0].d)+'</b></span>':'')+(isG?'<span>GCash and Load <b class="num">'+php(hist[0].g)+'</b></span>':'')+(!isP&&!isG?'<span>You are not set to receive a share</span>':'')+'</div></div>';
  h+='<div><h3 style="margin-bottom:8px">Share by month</h3><div class="list">'+hist.map(function(x){
   return '<div class="li"><span style="width:76px" class="sm muted">'+esc(mlabel(x.m))+'</span><div class="bar grow"><i style="width:'+Math.round(Math.abs(x.v)/max*100)+'%"></i></div><span class="amt" style="min-width:96px;text-align:right">'+php(x.v)+'</span></div>';
  }).join('')+'</div></div>';
@@ -560,10 +634,10 @@ function adminView(me){
   h+='<div class="row between"><span class="muted sm">'+S.accounts.length+' accounts</span><button class="btn primary sm" data-act="addacc">'+ic('plus',18)+'Add account</button></div><div class="cols">';
   S.accounts.slice().sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)}).forEach(function(a){
    var shown=S.reveal[a.id];
-   h+='<div class="card acc"><div class="row"><span class="avatar">'+initial(a.name)+'</span><div class="grow"><b>'+esc(a.name)+'</b>'+(a.id===me.id?' <span class="chip ok">You</span>':'')+'<div class="sm muted">'+(a.lastLogin?'Last login '+esc(dtLabel(a.lastLogin)):'Never logged in')+'</div></div><span class="chip '+(a.role==='admin'?'admin':a.role==='user'?'user':'')+'">'+esc(a.role)+'</span></div>'+
+   h+='<div class="card acc"><div class="row">'+av(a,38)+'<div class="grow"><b>'+esc(a.name)+'</b>'+(a.id===me.id?' <span class="chip ok">You</span>':'')+'<div class="sm muted">'+(a.lastLogin?'Last login '+esc(dtLabel(a.lastLogin)):'Never logged in')+'</div></div><span class="chip '+(a.role==='admin'?'admin':a.role==='user'?'user':'')+'">'+esc(a.role)+'</span></div>'+
    '<div class="pinrow"><span class="sm muted">PIN</span><span class="pv">'+(shown?esc(a.pin):'••••••')+'</span>'+(a.mustChange?'<span class="chip warn">Default, not changed yet</span>':'')+'<span class="grow"></span><button class="btn soft sm" data-act="reveal" data-id="'+esc(a.id)+'">'+(shown?'Hide':'Show')+'</button><button class="btn soft sm" data-act="resetpin" data-id="'+esc(a.id)+'">Reset PIN</button></div>'+
    '<div class="seg">'+['admin','user','viewer'].map(function(r){return '<button class="'+(a.role===r?'on':'')+'" data-act="setrole" data-id="'+esc(a.id)+'" data-r="'+r+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</button>'}).join('')+'</div>'+
-   '<div class="row between"><label class="row sm" style="gap:8px"><input type="checkbox" data-act="partner" data-id="'+esc(a.id)+'" '+(a.partner!==false?'checked':'')+' style="width:20px;height:20px"> <span>Shares the income</span></label><button class="btn danger sm" data-act="delacc" data-id="'+esc(a.id)+'">'+ic('trash',18)+'Remove</button></div></div>';
+   '<div class="row between"><label class="row sm" style="gap:8px"><input type="checkbox" data-act="partner" data-id="'+esc(a.id)+'" '+(a.partner!==false?'checked':'')+' style="width:20px;height:20px"> <span>Shares drinks</span></label><label class="row sm" style="gap:8px"><input type="checkbox" data-act="glpartner" data-id="'+esc(a.id)+'" '+(a.glPartner!==false?'checked':'')+' style="width:20px;height:20px"> <span>Shares GCash and Load</span></label><button class="btn danger sm" data-act="delacc" data-id="'+esc(a.id)+'">'+ic('trash',18)+'Remove</button></div></div>';
   });
   h+='</div>';
  }else if(S.adminTab==='edits'){
@@ -583,7 +657,7 @@ function adminView(me){
   h+='</div><p class="sm muted">Shows the latest 150 attempts.</p>';
  }else{
   h+='<div class="card stack"><div class="field"><label for="cap">Capital put into the drinks (PHP)</label><input id="cap" type="number" inputmode="decimal" min="0" step="0.01" value="'+(S.capital||'')+'"></div><button class="btn primary" data-act="savecap">Save capital</button></div>';
-  h+=ratesCard()+loadRatesCard()+(S.imports.length?importsList():'');
+  h+=smsCard()+ratesCard()+loadRatesCard()+(S.imports.length?importsList():'');
   h+='<p class="sm muted">Capital is shown on the Home page for reference. The monthly split uses drinks profit plus GCash fees, so the capital stays in the business for restocking.</p>';
  }
  return h;
@@ -593,14 +667,15 @@ function adminView(me){
 function render(){if(S.raf)return;if(document.activeElement&&document.activeElement.id==='q')return;S.raf=requestAnimationFrame(function(){S.raf=0;draw()})}
 function draw(){
  if(!S.token||S.flow||!S.me){$app.innerHTML=loginView();if(S.flow)S.flow.shake=false;return}
- var me=cur(),tabs=[['home','Home','home'],['sales','Sales','sales'],['gcash','GCash','phone'],['money','Money','coins'],['profile','Profile','user']];
+ var me=cur(),tabs=[['home','Home','home'],['sales','Sales','cart'],['gcash','GCash','wallet'],['money','Money','cash'],['profile','Profile','person']];
  if(me.role==='admin')tabs.push(['admin','Admin','shield']);
  if(S.tab==='admin'&&me.role!=='admin')S.tab='home';
  var body=S.tab==='sales'?salesView(me):S.tab==='gcash'?gcashView(me):S.tab==='money'?moneyView(me):S.tab==='profile'?profileView(me):S.tab==='admin'?adminView(me):homeView(me);
- var top='<div class="top"><div class="brand">'+cap(26)+'<span>TindaKita</span></div><div class="row" style="gap:8px"><span class="sm muted who">'+esc(me.role)+'</span><button class="iconbtn" data-act="refresh" aria-label="Refresh"'+(S.syncing?' disabled':'')+'>'+ic('refresh')+'</button></div></div>';
- var banner=S.offline?'<div class="note warn">You are offline. These are the last saved numbers. Recording and editing need internet.</div>':'';
- var nav='<nav class="nav"><div class="in">'+tabs.map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-act="tab" data-t="'+t[0]+'" aria-label="'+t[1]+'">'+ic(t[2])+'<span>'+t[1]+'</span></button>'}).join('')+'</div></nav>';
- $app.innerHTML='<div class="wrap">'+top+'<div class="stack">'+banner+body+'</div></div>'+nav;
+ var off=S.offline||!navigator.onLine;
+ var top='<div class="top"><div class="brand">'+cap(26)+'<span>TindaKita</span></div><div class="stat"><div class="clock" id="clk">'+esc(clockText())+'</div><button class="syncp" data-act="refresh" aria-label="Sync now"><i class="dot'+(off?' off':S.syncing?' busy':'')+'"></i><span>'+esc(syncText())+'</span></button></div></div>';
+ var banner=off?'<div class="note warn">You are offline. You can still record sales, GCash, load, and top ups. They are saved on this phone and sent when the internet is back.</div>':'';
+ var nav='<nav class="nav"><div class="in">'+tabs.map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-act="tab" data-t="'+t[0]+'" aria-label="'+t[1]+'">'+ic(t[2],26)+'<span>'+t[1]+'</span></button>'}).join('')+'</div></nav>';
+ $app.innerHTML='<div class="wrap">'+top+'<div class="stack">'+banner+pendingHtml()+body+'</div></div>'+nav;
 }
 
 /* ================= sheets ================= */
@@ -662,9 +737,9 @@ function openSale(item){
    upd();if(qty<1)return;
    $go.disabled=true;p.querySelector('#sl-err').textContent='';
    try{
-    await api('addSale',{itemId:item.id,unit:unit,qty:qty});
     var c=calc(item,unit,qty);
-    closeSheet();toast('Recorded '+qty+' '+(unit==='case'?'case':'bottle')+(qty>1?'s':'')+' of '+item.name+'. Profit '+php(c.profit));
+    submit('addSale',{itemId:item.id,unit:unit,qty:qty},'Sale: '+qty+' '+(unit==='case'?'case':'bottle')+(qty>1?'s':'')+' of '+item.name);
+    closeSheet();toast((S.offline?'Saved on this phone. It will send when the internet is back. ':'Recorded. ')+'Profit '+php(c.profit));
    }catch(e){p.querySelector('#sl-err').textContent=e.message;$go.disabled=false}
   });
  });
@@ -680,6 +755,7 @@ function openDetails(item){
 }
 
 /* one sale: details, original entry, edit history */
+function lateNote(o){return o.syncedAt&&o.syncedAt-o.at>300000?'<div class="note">Entered without internet at '+esc(dtLabel(o.at))+'. The server received it on '+esc(dtLabel(o.syncedAt))+'.</div>':''}
 function unitName(s){return s.unit==='case'?(s.qty===1?'case':'cases'):(s.qty===1?'bottle':'bottles')}
 function openSaleDetail(id){
  var s=S.sales.filter(function(x){return x.id===id})[0];
@@ -691,7 +767,7 @@ function openSaleDetail(id){
   '<div class="r muted"><span>Cost</span><span>'+php(s.cost)+'</span></div><hr>'+
   '<div class="r tot"><span>Profit</span><span class="'+(s.profit>=0?'pos':'neg')+'">'+php(s.profit)+'</span></div><hr>'+
   Object.keys(s.shares||{}).map(function(k){return '<div class="r"><span>'+esc(nameOf(k))+'</span><span>'+php(s.shares[k])+'</span></div>'}).join('')+'</div>';
- h+='<div class="stamp">'+ic('clock',16)+'<span>Recorded by <b>'+esc(s.byName)+'</b> on '+esc(dtLabel(s.at))+'</span></div>';
+ h+='<div class="stamp">'+ic('clock',16)+'<span>Recorded by <b>'+esc(s.byName)+'</b> on '+esc(dtLabel(s.at))+'</span></div>'+lateNote(s);
  if(s.status==='void')h+='<div class="note warn"><b>Voided</b> by '+esc(s.voidedByName)+' on '+esc(dtLabel(s.voidedAt))+'.<br>Reason: '+esc(s.voidReason)+'</div>';
  if(s.editCount>0){
   h+='<div class="card stack" style="gap:10px"><h3>Edited '+s.editCount+(s.editCount===1?' time':' times')+'</h3>'+
@@ -832,9 +908,6 @@ function openAddAccount(){
 }
 
 /* ================= GCash ================= */
-ICONS.wallet='<path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16.5" cy="14" r="1.2"/>';
-ICONS.coins='<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.4-.8-1.300-1.200-2.500-1.200-1.500 0-2.500.7-2.500 1.800 0 2.600 5 1.300 5 3.900 0 1.100-1 1.800-2.500 1.800-1.200 0-2.100-.5-2.500-1.300M12 6.500V8m0 8v1.500"/>';
-ICONS.phone='<rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/>';
 ICONS.upload='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>';
 var DEFAULT_RATES=[[1,500,10],[501,1000,25],[1001,1500,35],[1501,2000,45],[2001,2500,55],[2501,3000,65],[3001,3500,75],[3501,4000,85],[4001,4500,95],[4501,5000,105],[5001,5500,115],[5501,6000,125],[6001,6500,135],[6501,7000,145],[7001,7500,155],[7501,8000,165],[8001,8500,175],[8501,9000,185],[9001,9500,195],[9501,10000,205]];
 function rateList(){return (S.rates&&S.rates.length)?S.rates:DEFAULT_RATES}
@@ -871,6 +944,8 @@ function gcashView(me){
  var bal=walletBal(sub);
  h+='<div class="card stack" style="gap:8px"><div class="row between"><div><div class="sm muted">'+(isL?'Load':'GCash')+' wallet, money available now</div><div class="num" style="font-size:24px;font-weight:600">'+php(bal)+'</div></div>'+(canEdit?'<button class="btn soft sm" data-act="topup" data-w="'+sub+'">'+ic('plus',18)+'Top up</button>':'')+'</div>'+
   (bal<1000?'<div class="note warn">'+(bal<=0?'The wallet is empty. ':'Running low. ')+'Add a top up so '+(isL?'load can be sold':'cash in can continue')+'.</div>':'')+'<div class="sm muted">'+(isL?'Each load sold lowers this wallet by the load amount.':'Cash in lowers this wallet. Cash out raises it. Top ups are counted as money spent from the capital.')+'</div></div>';
+ if(canEdit&&!isL)h+=inboxHtml();
+ h+=topupHist(sub);
  h+='<div class="hero"><div class="lbl">'+esc(mlabel(S.month))+' '+(isL?'load':'GCash')+' fee income</div><div class="big num">'+php(gFees(live))+'</div><div class="sub">'+(isL?'<span><b class="num">'+live.length+'</b> sold, '+php(sum(live))+' load</span>':'<span><b class="num">'+cin.length+'</b> cash in, '+php(sum(cin))+'</span><span><b class="num">'+cout.length+'</b> cash out, '+php(sum(cout))+'</span>')+'</div></div>';
  if(canEdit&&!isL)h+='<div class="card stack" style="gap:10px"><div class="row" style="gap:12px">'+ic('upload',22)+'<div class="grow"><b>Check with the GCash statement</b><div class="sm muted">Upload the PDF or a picture. It checks every row against what was typed in, adds the missing ones, and fixes wrong amounts. Every change is stamped.</div></div></div><button class="btn soft" data-act="gstmt">'+ic('upload',18)+'Upload statement</button></div>';
  if(ps.length&&live.length)h+='<div><h3 style="margin-bottom:8px">Fee income per person</h3><div class="list">'+ps.map(function(a){return '<div class="li'+(a.id===me.id?' me':'')+'"><span class="avatar">'+initial(a.name)+'</span><span class="grow"><b>'+esc(a.name)+'</b></span><span class="amt">'+php(gShare(live,a.id))+'</span></div>'}).join('')+'</div></div>';
@@ -936,7 +1011,7 @@ function openGcash(kind){
    if(isL)data.note=net;else data.ref=g('gc-ref').value.trim();
    if(custom||feeOf(type,a)===null){if(g('gc-f').value===''){err.textContent='Enter the fee.';return}data.fee=r2(g('gc-f').value);data.feeNote=g('gc-fn').value.trim();if(feeOf(type,a)===data.fee)delete data.feeNote}
    this.disabled=true;err.textContent='';
-   try{await api('addGcash',data);closeSheet();toast((isL?'Load sale':gTypeName(type))+' recorded')}catch(e){err.textContent=e.message;this.disabled=false}
+   submit('addGcash',data,(isL?'Load ':gTypeName(type)+' ')+php(a));closeSheet();toast(S.offline?'Saved on this phone. It sends when the internet is back.':(isL?'Load sale':gTypeName(type))+' recorded');
   });
  });
 }
@@ -1012,9 +1087,10 @@ function findTime(s){
  if(m&&MONTHS[m[1].toLowerCase()])return mkTime(m[3],MONTHS[m[1].toLowerCase()],m[2],m[4],m[5],m[6],m[7]);
  return 0;
 }
-var START_RE=/^\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|[A-Za-z]{3,9}\.? \d{1,2},? \d{4})/;
+var START_RE=/^\s*(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|[A-Za-z]{3,9}\.? \d{1,2},? \d{4})(?:[ ,T]+\d{1,2}:\d{2}|\s*$)/;
 var NUM_RE=/-?\d{1,3}(?:,\d{3})+\.\d{2}|-?\d+\.\d{2}/g;
-var IGNORE_RE=/load|bill|pay\b|payment|merchant|\bqr\b|fee|gsave|gcredit|ggives|gloan|bank|instapay|pesonet|cash.?in|refund|interest|insurance|invest/i;
+var IGNORE_RE=/load|bill|pay\b|payment|merchant|\bqr\b|fee|gsave|gcredit|ggives|gloan|refund|interest|insurance|invest/i;
+var TOPUP_RE=/cash.?in|7.?eleven|kiosk|cliqq|bank|instapay|pesonet|partner outlet|maribank|maya|seabank|gotyme|branch/i;
 var DEBIT_RE=/send money|transfer to|sent to|express send|\bsent\b/i;
 var CREDIT_RE=/received|transfer from|\bfrom\b|express/i;
 function findRef(s){
@@ -1050,12 +1126,8 @@ function parseRecords(recs){
  });
  return out.map(function(o){
   var type='';
-  if(!IGNORE_RE.test(o.desc)){
-   if(o.dir==='debit'&&DEBIT_RE.test(o.desc))type='in';
-   else if(o.dir==='credit'&&CREDIT_RE.test(o.desc))type='out';
-   else if(o.dir==='debit'&&!o.desc)type='in';
-   else if(o.dir==='credit'&&!o.desc)type='out';
-  }
+  if(o.dir==='credit'&&TOPUP_RE.test(o.desc))type='topup';
+  else if(!IGNORE_RE.test(o.desc)&&!(o.dir==='debit'&&TOPUP_RE.test(o.desc))){if(o.dir==='debit')type='in';else if(o.dir==='credit')type='out'}
   return {at:o.at,ref:o.ref,desc:o.desc,amount:o.amount,dir:o.dir,type:type};
  });
 }
@@ -1156,7 +1228,7 @@ function stmtReview(){
  }
  var h=head('Review the rows')+'<p class="sm muted" style="margin:0">The app guessed each row. Cash in means the store sent GCash. Cash out means the store received GCash. Set anything that is not a cash in or cash out to Skip.</p><div class="stack" style="gap:8px" id="st-rows">';
  rows.forEach(function(r,i){
-  h+='<div class="card rvrow" data-i="'+i+'"><div class="row between" style="gap:8px"><span class="sm"><b>'+(r.at?esc(dtLabel(r.at)):'No time found')+'</b></span><span class="sm muted">'+(r.dir==='debit'?'Money out':r.dir==='credit'?'Money in':'')+'</span></div><div class="sm muted" style="overflow-wrap:anywhere">'+esc(r.desc||'')+(r.ref?' · Ref '+esc(r.ref):'')+'</div><div class="two"><select class="rv-t" aria-label="Type"><option value="in"'+(r.type==='in'?' selected':'')+'>Cash in</option><option value="out"'+(r.type==='out'?' selected':'')+'>Cash out</option><option value=""'+(r.type===''?' selected':'')+'>Skip</option></select><input class="rv-a" type="number" inputmode="decimal" step="0.01" value="'+r.amount+'" aria-label="Amount"></div></div>';
+  h+='<div class="card rvrow" data-i="'+i+'"><div class="row between" style="gap:8px"><span class="sm"><b>'+(r.at?esc(dtLabel(r.at)):'No time found')+'</b></span><span class="sm muted">'+(r.dir==='debit'?'Money out':r.dir==='credit'?'Money in':'')+'</span></div><div class="sm muted" style="overflow-wrap:anywhere">'+esc(r.desc||'')+(r.ref?' · Ref '+esc(r.ref):'')+'</div><div class="two"><select class="rv-t" aria-label="Type"><option value="in"'+(r.type==='in'?' selected':'')+'>Cash in</option><option value="out"'+(r.type==='out'?' selected':'')+'>Cash out</option><option value="topup"'+(r.type==='topup'?' selected':'')+'>Top up</option><option value=""'+(r.type===''?' selected':'')+'>Skip</option></select><input class="rv-a" type="number" inputmode="decimal" step="0.01" value="'+r.amount+'" aria-label="Amount"></div></div>';
  });
  h+='</div><div class="err" id="st-err"></div><div class="wrapbtns"><button class="btn primary grow" id="st-go">Check against the app</button><button class="btn ghost" data-sheet="close">Cancel</button></div>';
  openSheet(h,function(p){
@@ -1190,6 +1262,7 @@ function stmtResult(){
    return '<label class="li"><input type="checkbox" class="ck-fix" data-i="'+i+'" checked style="width:20px;height:20px"><span class="grow"><b>'+gTypeName(d.row.type)+'</b><div class="sm">App: '+cmpManual(d.manual)+'</div><div class="sm">Statement: '+php(d.row.amount)+' at '+timeLabel(d.row.at)+'</div></span><span class="amt sm">'+(d.manual.fee===d.newFee?'fee '+php(d.newFee):'fee '+php(d.manual.fee)+' to '+php(d.newFee))+'</span></label>';
   }).join('')+'</div></div>';
  }
+ if(P.topMissing&&P.topMissing.length){h+='<div class="stack" style="gap:6px"><h3>Top ups found ('+P.topMissing.length+')</h3><p class="sm muted" style="margin:0">Money added to the GCash wallet. Ticked rows are saved in the top up history.</p><div class="list">'+P.topMissing.map(function(m,i){return '<label class="li"><input type="checkbox" class="ck-top" data-i="'+i+'" checked style="width:20px;height:20px"><span class="grow"><b>Top up '+php(m.row.amount)+'</b><div class="sm muted">'+esc(dtLabel(m.row.at))+(m.row.desc?' · '+esc(m.row.desc):'')+'</div></span><span class="amt pos">+'+php(m.row.amount)+'</span></label>'}).join('')+'</div></div>'}
  var links=P.matched.filter(function(m){return m.link});
  if(links.length)h+='<label class="li"><input type="checkbox" id="ck-link" checked style="width:20px;height:20px"><span class="grow">Add the reference number to '+links.length+' matching transaction'+(links.length===1?'':'s')+'</span></label>';
  if(P.notInStatement.length){
@@ -1197,26 +1270,41 @@ function stmtResult(){
    return '<button class="li lib" data-act="gitem" data-id="'+esc(n.id)+'"><span class="grow"><b>'+gTypeName(n.type)+' '+php(n.amount)+'</b><div class="sm muted">'+esc(dtLabel(n.at))+' by '+esc(n.byName)+'</div></span><span class="chip warn">Check</span></button>';
   }).join('')+'</div></div>';
  }
- var nothing=!P.missing.length&&!P.differs.length&&!links.length;
+ var nothing=!P.missing.length&&!P.differs.length&&!links.length&&!(P.topMissing&&P.topMissing.length);
  if(nothing&&!P.notInStatement.length)h+='<div class="note">Everything on the statement is already in the app. No changes needed.</div>';
  h+='<div class="err" id="st-err"></div><div class="wrapbtns">'+(nothing?'':'<button class="btn primary grow" id="st-apply">Apply the ticked changes</button>')+'<button class="btn ghost" data-sheet="close">Close</button></div>';
  openSheet(h,function(p){
   var b=p.querySelector('#st-apply');if(!b)return;
   b.addEventListener('click',async function(){
-   var add=[],fix=[],link=[];
+   var add=[],fix=[],link=[],addTop=[];
+   p.querySelectorAll('.ck-top').forEach(function(c){if(c.checked)addTop.push(P.topMissing[+c.dataset.i].row)});
    p.querySelectorAll('.ck-add').forEach(function(c){if(c.checked)add.push(P.missing[+c.dataset.i].row)});
    p.querySelectorAll('.ck-fix').forEach(function(c){if(c.checked){var d=P.differs[+c.dataset.i];fix.push({id:d.id,amount:d.row.amount})}});
    var lk=p.querySelector('#ck-link');if(lk&&lk.checked)links.forEach(function(m){link.push({id:m.id,ref:m.row.ref})});
-   if(!add.length&&!fix.length&&!link.length){p.querySelector('#st-err').textContent='Nothing is ticked.';return}
+   if(!add.length&&!fix.length&&!link.length&&!addTop.length){p.querySelector('#st-err').textContent='Nothing is ticked.';return}
    this.disabled=true;p.querySelector('#st-err').textContent='';
    try{
-    var data={rows:ST.sent,add:add,fix:fix,link:link,fileName:ST.file?ST.file.name:'',meta:{flagged:P.notInStatement.length}};
+    var data={rows:ST.sent,add:add,fix:fix,link:link,addTop:addTop,fileName:ST.file?ST.file.name:'',meta:{flagged:P.notInStatement.length}};
     if(ST.file&&ST.file.size<6000000)data.fileData=await fileToDataUrl(ST.file);
     var j=await api('gcashApply',data),r=j.result;
-    openSheet(head('Done')+'<div class="receipt"><div class="r"><span>Added</span><span>'+r.added+'</span></div><div class="r"><span>Corrected</span><span>'+r.corrected+'</span></div><div class="r"><span>Reference numbers added</span><span>'+r.linked+'</span></div>'+(r.skipped?'<div class="r muted"><span>Skipped</span><span>'+r.skipped+'</span></div>':'')+'</div><p class="sm muted" style="margin:0">Every change is stamped with the time and your name. The statement is saved in Drive.</p><div class="wrapbtns"><button class="btn primary" data-sheet="close">Close</button></div>');
+    openSheet(head('Done')+'<div class="receipt"><div class="r"><span>Added</span><span>'+r.added+'</span></div><div class="r"><span>Corrected</span><span>'+r.corrected+'</span></div><div class="r"><span>Top ups added</span><span>'+(r.topAdded||0)+'</span></div><div class="r"><span>Reference numbers added</span><span>'+r.linked+'</span></div>'+(r.skipped?'<div class="r muted"><span>Skipped</span><span>'+r.skipped+'</span></div>':'')+'</div><p class="sm muted" style="margin:0">Every change is stamped with the time and your name. The statement is saved in Drive.</p><div class="wrapbtns"><button class="btn primary" data-sheet="close">Close</button></div>');
    }catch(e){p.querySelector('#st-err').textContent=e.message;this.disabled=false}
   });
  });
+}
+
+/* messages that came from GCash or Maribank texts */
+function inboxHtml(){
+ var list=S.inbox||[];if(!list.length)return '';
+ return '<div class="stack" style="gap:8px"><h3>New messages ('+list.length+')</h3><p class="sm muted" style="margin:0">These came from GCash or bank texts. Tap Add to record one, or Ignore.</p><div class="list">'+list.map(function(x){
+  var kinds={in:'Cash in',out:'Cash out',topup:'Top up'},k=kinds[x.kind]||'Message';
+  return '<div class="li" style="align-items:flex-start;flex-wrap:wrap"><div class="grow" style="min-width:0"><div><b>'+k+' '+php(x.amount)+'</b> <span class="muted sm">'+esc(timeLabel(x.at))+'</span></div><div class="sm muted" style="overflow-wrap:anywhere">'+esc(x.text.slice(0,140))+'</div>'+(x.match?'<div class="sm">Looks the same as an entry already typed in.</div>':'')+'</div><div class="row" style="gap:6px;flex-wrap:wrap">'+(x.match?'<button class="btn soft sm" data-act="inboxlink" data-id="'+esc(x.id)+'" data-g="'+esc(x.match)+'">Same entry</button>':'')+'<button class="btn primary sm" data-act="inboxadd" data-id="'+esc(x.id)+'" data-k="'+esc(x.kind)+'">Add</button><button class="btn ghost sm" data-act="inboxskip" data-id="'+esc(x.id)+'">Ignore</button></div></div>';
+ }).join('')+'</div></div>';
+}
+function topupHist(w){
+ var list=(S.topups||[]).filter(function(t){return t.wallet===w}).sort(function(a,b){return b.at-a.at}).slice(0,5);
+ if(!list.length)return '';
+ return '<div class="stack" style="gap:6px"><div class="row between"><h3>Top up history</h3><button class="btn ghost sm" data-act="tab" data-t="money">See all</button></div><div class="list">'+list.map(function(t){var v=t.status==='void';return '<button class="li lib'+(v?' voided':'')+'" data-act="titem" data-id="'+esc(t.id)+'"><div class="grow"><div><b>Top up</b>'+(v?' <span class="chip admin">Voided</span>':'')+(t.source&&t.source!=='manual'?' <span class="chip ok">'+(t.source==='sms'?'Text':'Statement')+'</span>':'')+'</div><div class="sm muted">'+esc(dtLabel(t.at))+' by '+esc(t.byName)+(t.note&&!t.source?' · '+esc(t.note):'')+'</div></div><div class="amt amt1 pos">+'+php(t.amount)+'</div></button>'}).join('')+'</div></div>';
 }
 
 /* ================= Money: capital, wallets, top ups, purchases ================= */
@@ -1264,7 +1352,7 @@ function openTopup(w){
   g('tp-go').addEventListener('click',async function(){
    var a=r2(g('tp-a').value),err=g('tp-err');if(!(a>0)){err.textContent='Enter the amount.';return}
    this.disabled=true;err.textContent='';
-   try{await api('addTopup',{wallet:w,amount:a,note:g('tp-n').value.trim()});closeSheet();toast('Top up added')}catch(e){err.textContent=e.message;this.disabled=false}
+   submit('addTopup',{wallet:w,amount:a,note:g('tp-n').value.trim()},(isL?'Load':'GCash')+' top up '+php(a));closeSheet();toast(S.offline?'Saved on this phone. It sends when the internet is back.':'Top up added');
   });
  });
 }
@@ -1318,12 +1406,12 @@ function openPurchase(){
   g('pu-a').addEventListener('input',function(){manual=true;g('pu-hint').textContent='';upd()});
   upd();
   g('pu-go').addEventListener('click',async function(){
-   var it=item(),err=g('pu-err'),data={amount:g('pu-a').value};
+   var it=item(),err=g('pu-err'),data={amount:g('pu-a').value},a0=r2(g('pu-a').value);
    if(g('pu-a').value===''){err.textContent='Enter the amount paid.';return}
    if(it){data.itemId=it.id;data.unit=unit;data.qty=Math.floor(Number(g('pu-q').value)||0);if(data.qty<1){err.textContent='Enter how many.';return}}
    else{data.label=g('pu-l').value.trim();if(data.label.length<3){err.textContent='Write what was bought.';return}}
    this.disabled=true;err.textContent='';
-   try{await api('addPurchase',data);closeSheet();toast('Purchase recorded')}catch(e){err.textContent=e.message;this.disabled=false}
+   submit('addPurchase',data,'Bought '+(it?it.name:data.label)+' '+php(a0));closeSheet();toast(S.offline?'Saved on this phone. It sends when the internet is back.':'Purchase recorded');
   });
  });
 }
@@ -1336,13 +1424,32 @@ async function saveLoadFromUi(){
  try{await api('saveLoadRates',{step:document.getElementById('ld-s').value,fee:document.getElementById('ld-f').value});err.textContent='';toast('Load fee saved')}catch(e){err.textContent=e.message}
 }
 
+/* reading GCash and bank texts */
+function smsCard(){
+ if(!S.sms)return '';
+ var key=S.sms.key,url=API_URL+'?action=sms&key='+key+'&sender=GCash&text=';
+ var post='{"action":"smsIngest","key":"'+key+'","sender":"GCash","text":"MESSAGE TEXT HERE"}';
+ return '<div class="card stack"><div><h3>Read GCash and bank texts</h3><p class="sm muted" style="margin:4px 0 0">A web page cannot read text messages by itself. A small free app on the phone that gets the GCash and Maribank texts can forward each text here. Then cash in, cash out, and top ups are recorded for you.</p></div>'+
+ '<label class="row sm" style="gap:8px"><input type="checkbox" data-act="smsauto" '+(S.sms.auto?'checked':'')+' style="width:20px;height:20px"> <span>Add automatically (off means each text waits for a tap)</span></label>'+
+ '<div class="field"><label>Secret key</label><div class="row" style="gap:8px;flex-wrap:nowrap"><input readonly value="'+esc(key)+'" style="flex:1;min-width:0"><button class="btn soft sm" data-act="copy" data-v="'+esc(key)+'">Copy</button></div></div>'+
+ '<div class="field"><label>Link for the forwarding app (the text is added at the end)</label><div class="row" style="gap:8px;flex-wrap:nowrap"><input readonly value="'+esc(url)+'" style="flex:1;min-width:0"><button class="btn soft sm" data-act="copy" data-v="'+esc(url)+'">Copy</button></div></div>'+
+ '<details><summary class="sm"><b>Android steps</b></summary><ol class="sm" style="margin:6px 0 0;padding-left:20px;display:grid;gap:4px"><li>Install a free forwarder such as MacroDroid or SMS Forwarder.</li><li>Make a rule: when an SMS comes from GCash (or MARIBANK), send an HTTP request.</li><li>Use the link above as the address, with the message text added at the end. Or send a POST with this body: <span style="overflow-wrap:anywhere">'+esc(post)+'</span></li><li>Allow the app to run in the background and read SMS.</li></ol></details>'+
+ '<details><summary class="sm"><b>iPhone steps</b></summary><ol class="sm" style="margin:6px 0 0;padding-left:20px;display:grid;gap:4px"><li>Open Shortcuts, then Automation, then New, then Message.</li><li>Set Sender contains GCash, choose Run Immediately.</li><li>Add the action Get Contents of URL. Use the link above and add the Message variable at the end.</li></ol></details>'+
+ '<p class="sm muted" style="margin:0">Each text is read for the amount, the reference number, and whether money came in or went out. A text with the same reference number is never added twice. Texts that are not cash in, cash out, or top up are ignored. Check the first few days to see that it reads your texts right.</p>'+
+ '<button class="btn ghost sm" data-act="newkey">Make a new key</button></div>';
+}
+
 /* ================= events ================= */
 $app.addEventListener('input',function(e){
  if(e.target.id==='q'){S.q=e.target.value;var g=document.getElementById('grid');if(g)g.innerHTML=gridHtml()}
 });
 $app.addEventListener('change',async function(e){
- var t=e.target;if(!t.dataset||t.dataset.act!=='partner')return;
- try{await api('updateAccount',{id:t.dataset.id,partner:t.checked})}catch(x){toast(x.message);t.checked=!t.checked}
+ var t=e.target;
+ if(t.id==='pf-file'){var f=t.files[0];if(!f)return;try{var d=await squarePhoto(f);await api('setPhoto',{photoData:d});toast('Photo saved')}catch(x){toast(x.message==='image'?'That photo could not be read.':x.message)}return}
+ if(!t.dataset)return;
+ if(t.dataset.act==='partner'){try{await api('updateAccount',{id:t.dataset.id,partner:t.checked})}catch(x){toast(x.message);t.checked=!t.checked}}
+ else if(t.dataset.act==='glpartner'){try{await api('updateAccount',{id:t.dataset.id,glPartner:t.checked})}catch(x){toast(x.message);t.checked=!t.checked}}
+ else if(t.dataset.act==='smsauto'){try{await api('saveSms',{auto:t.checked});toast(t.checked?'Texts are added automatically':'Texts wait for a tap')}catch(x){toast(x.message);t.checked=!t.checked}}
 });
 $app.addEventListener('click',async function(e){
  var b=e.target.closest('[data-act]');if(!b||b.tagName==='INPUT')return;
@@ -1360,6 +1467,9 @@ $app.addEventListener('click',async function(e){
  else if(a==='logout')logout();
  else if(a==='changepin')startChangePin();
  else if(a==='refresh')sync(true);
+ else if(a==='dismissfail'){S.failed.splice(+id,1);draw()}
+ else if(a==='photo'){var pf=document.getElementById('pf-file');if(pf)pf.click()}
+ else if(a==='copy'){try{navigator.clipboard.writeText(b.dataset.v);toast('Copied')}catch(x){toast('Press and hold to copy')}}
  else if(!me)return;
  else if(a==='item'){var it=S.items.filter(function(x){return x.id===id})[0];if(!it)return;if(me.role==='viewer')openDetails(it);else openSale(it)}
  else if(a==='additem')openItem(null);
@@ -1372,6 +1482,9 @@ $app.addEventListener('click',async function(e){
  else if(a==='titem')openTopupDetail(id);
  else if(a==='gitem')openGcashDetail(id);
  else if(a==='gstmt')openStatement();
+ else if(a==='inboxadd'){try{await api('inboxAdd',{id:id,type:b.dataset.k});toast('Added')}catch(x){toast(x.message)}}
+ else if(a==='inboxlink'){try{await api('inboxAdd',{id:id,linkId:b.dataset.g});toast('Linked to the typed entry')}catch(x){toast(x.message)}}
+ else if(a==='inboxskip'){try{await api('inboxIgnore',{id:id})}catch(x){toast(x.message)}}
  else if(me.role!=='admin')return;
  else if(a==='addacc')openAddAccount();
  else if(a==='reveal'){S.reveal[id]=!S.reveal[id];draw()}
@@ -1385,6 +1498,7 @@ $app.addEventListener('click',async function(e){
   confirmSheet('Remove '+d.name+'?','The account and PIN are deleted. Past sales stay in the records.','Remove account',function(){return api('deleteAccount',{id:id})},true);
  }
  else if(a==='saverates')saveRatesFromUi();
+ else if(a==='newkey')confirmSheet('Make a new key?','The old key stops working. You must paste the new link into the forwarding app on the phone.','Make new key',function(){return api('saveSms',{newKey:true})});
  else if(a==='saveload')saveLoadFromUi();
  else if(a==='savecap'){
   var val=Number(document.getElementById('cap').value)||0;
@@ -1397,6 +1511,7 @@ $sheet.addEventListener('click',function(e){var b=e.target.closest('[data-act="g
 /* a photo that cannot load is replaced by a bottle icon */
 document.addEventListener('error',function(e){
  var t=e.target;if(!t||t.tagName!=='IMG'||!t.dataset.fb)return;
+ if(t.dataset.fb==='av'){t.replaceWith(document.createTextNode(t.dataset.i||'?'));return}
  var w=document.createElement('div');w.innerHTML=ic('bottle',t.closest('.ph')?44:28);
  t.replaceWith(w.firstChild);
 },true);
