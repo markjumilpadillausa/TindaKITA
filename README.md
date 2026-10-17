@@ -121,6 +121,10 @@ The logo has no box behind it now. Replace icon-192.png, icon-512.png, icon-180.
 
 When you save a sale, GCash, load, top up or purchase, it shows in the lists and in every total at once. A small Sending tag shows until the server confirms. Every few seconds each phone does a very small check, and if someone else saved something it refreshes by itself. The Home page shows Capital left, Cash in the drawer, the GCash wallet and the Load wallet, and the profit cards show the income (drink profit plus GCash and Load fees).
 
+## If entries or fees do not show
+
+The wallet and capital numbers come from every saved row, while the lists and the profit cards show the months you are viewing. The app now works out each row's month from its saved time, so a row cannot be hidden if Google Sheets changes the month cell. The first time the new Code.gs runs it also puts the month column back to plain text. After updating, open the app twice.
+
 ## Photos of Mark, Yda and Mamang Judy
 
 Make a folder named photos in your GitHub repository (Add file, Create new file, type photos/ in the name). Upload three pictures there with exactly these names: mark.jpg, yda.jpg and mamang-judy.jpg. They show on the login screen, Home and Profile automatically. A person can still change their own photo in Profile, and that photo is used instead. Use square pictures if you can.

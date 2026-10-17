@@ -273,7 +273,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.7.0',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.7.1',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -344,7 +344,8 @@ function calc(item,unit,qty){
  var revenue=r2(unit==='case'?pc*qty:pb*qty),cost=r2(unit==='case'?costCase*qty:costB*qty);
  return {revenue:revenue,cost:cost,profit:r2(revenue-cost),bottles:unit==='case'?bpc*qty:qty,priceB:pb,priceC:pc,costB:costB,costC:costCase,bpc:bpc};
 }
-function split(profit,ids){
+function split(profit,ids){return splitShares(profit,ids)}
+function splitOld_(profit,ids){
  var n=ids.length,out={};if(!n)return out;
  var cents=Math.round(profit*100),q=Math.trunc(cents/n),r=cents-q*n;
  ids.forEach(function(id,i){out[id]=(q+(i<Math.abs(r)?(r<0?-1:1):0))/100});
@@ -1013,7 +1014,7 @@ function gRow(g){
   '<div style="text-align:right"><div class="amt amt1 pos">+'+php(g.fee)+'</div><div class="sm muted">fee</div></div></button>';
 }
 function gcashView(me){
- var sub=S.gsub==='load'?'load':'gcash',isL=sub==='load',canEdit=me.role!=='viewer',ps=partners();
+ var sub=S.gsub==='load'?'load':'gcash',isL=sub==='load',canEdit=me.role!=='viewer',ps=glPartners();
  function same(g){return isL?g.type==='load':g.type!=='load'}
  var live=gLive(S.month).filter(same),all=gAll(S.month).filter(same);
  var cin=live.filter(function(g){return g.type==='in'}),cout=live.filter(function(g){return g.type==='out'});
@@ -1081,7 +1082,7 @@ async function rateSave(k){
 }
 /* record a transaction */
 function openGcash(kind){
- var me=cur(),ps=partners(),isL=kind==='load',type=isL?'load':'in',custom=false,nets=['Globe','Smart','TNT','GOMO','DITO','Other'],net='Globe';
+ var me=cur(),ps=glPartners(),isL=kind==='load',type=isL?'load':'in',custom=false,nets=['Globe','Smart','TNT','GOMO','DITO','Other'],net='Globe';
  openSheet(head(isL?'Sell load':'GCash transaction')+
  (isL?'<div class="field"><label>Network</label><div class="seg" id="gc-net">'+nets.map(function(n,i){return '<button type="button" class="'+(i?'':'on')+'" data-n="'+n+'">'+n+'</button>'}).join('')+'</div></div>':'<div class="seg" id="gc-type"><button class="on" data-t="in">Cash in</button><button data-t="out">Cash out</button></div><p class="sm muted" id="gc-help" style="margin:0"></p>')+
  '<div class="field"><label for="gc-a">'+(isL?'Load amount (PHP)':'Amount (PHP)')+'</label><input id="gc-a" type="number" inputmode="decimal" min="1" step="'+(isL?'1':'0.01')+'" data-focus></div>'+
