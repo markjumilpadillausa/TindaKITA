@@ -117,6 +117,10 @@ A short pop up explains this the first time someone opens the app on a phone. Ch
 
 The logo has no box behind it now. Replace icon-192.png, icon-512.png, icon-180.png, icon-maskable-512.png, favicon.svg and manifest.json in GitHub. Installed copies of the app may keep the old icon until the app is removed from the phone and installed again.
 
+## Home money tiles
+
+Home shows Capital left, Total income and Cash in the drawer. Total income is the drink profit plus the GCash and Load fees. Capital left goes down when you buy drinks or top up GCash or Load, and goes up when drinks are sold. Cash in the drawer is Capital left plus Total income.
+
 ## The Sales page
 
 The Sales page has three tabs: Drinks, GCash and Load. Drinks shows the drink sales. GCash and Load show every transaction of that kind for the month, with the amount handled, the number of entries and the fee income. Tap a row to open it.
