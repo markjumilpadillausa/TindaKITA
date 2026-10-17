@@ -272,7 +272,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.6.0',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.6.1',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -585,10 +585,11 @@ function homeView(me){
  var list=liveSales(S.month),t=totals(list),ps=partners(),gps=glPartners(),canEdit=me.role!=='viewer',gl=gLive(S.month),gf=gFees(gl),total=r2(t.profit+gf);
  var h='<div class="row" style="gap:12px">'+av(me,48)+'<div class="grow"><div class="sm muted">'+greet()+'</div><h2>'+esc(me.name)+'</h2></div></div>'+monthPills();
  h+='<div class="hero"><div class="lbl">'+esc(mlabel(S.month))+' profit (kita)</div><div class="big num">'+php(total)+'</div>'+
-  '<div class="sub"><span>Drinks <b class="num">'+php(t.profit)+'</b></span><span>GCash and Load <b class="num">'+php(gf)+'</b></span><span>Sales <b class="num">'+php(t.revenue)+'</b></span><span><b class="num">'+t.bottles+'</b> bottles sold</span>'+(S.capital>0?'<span>Capital <b class="num">'+php(S.capital)+'</b></span>':'')+'</div></div>';
+  '<div class="sub"><span>Drinks <b class="num">'+php(t.profit)+'</b></span><span>GCash and Load fees <b class="num">'+php(gf)+'</b></span><span>Sales <b class="num">'+php(t.revenue)+'</b></span><span><b class="num">'+t.bottles+'</b> bottles sold</span>'+(S.capital>0?'<span>Capital <b class="num">'+php(S.capital)+'</b></span>':'')+'</div></div>';
  h+=walletTiles();
  if(canEdit&&S.inbox.length)h+='<button class="note warn" style="text-align:left;border:0" data-act="tab" data-t="gcash"><b>'+S.inbox.length+' new GCash message'+(S.inbox.length===1?'':'s')+' waiting.</b> Tap to review.</button>';
  var people=S.accounts.filter(function(a){return a.partner!==false||a.glPartner!==false}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
+ people.sort(function(a,b){return (b.id===me.id)-(a.id===me.id)});
  h+='<div><div class="row between" style="margin-bottom:8px"><h3>Share of the profit</h3></div><p class="sm muted" style="margin:0 0 8px">Drinks are split '+ps.length+' ways. GCash and Load are split '+gps.length+' ways.</p><div class="list">';
  if(!people.length)h+='<div class="li muted">No one is set to share the income yet.</div>';
  people.forEach(function(a){
