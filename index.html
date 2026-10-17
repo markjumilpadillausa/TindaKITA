@@ -251,6 +251,15 @@ html{-webkit-text-size-adjust:100%}
 .avbtn{position:relative;border:0;background:transparent;padding:0;border-radius:50%;flex:none;display:block}
 .avcam{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:var(--cap);color:var(--cap-ink);display:grid;place-items:center;border:2px solid var(--bg)}
 .avatar{overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.rrow{display:grid;grid-template-columns:1fr 1fr 1fr 40px;gap:8px;align-items:center}
+.rrow input{width:100%;min-width:0;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:15px var(--font-num);color:var(--ink)}
+.rrow input:disabled{background:var(--surface2);color:var(--ink);opacity:1;-webkit-text-fill-color:var(--ink);border-color:transparent}
+.rhead{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.rtot{grid-column:1/-1;margin-top:-4px}
+.rextra{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px}
+#printarea{display:none}
+@media print{body>*:not(#printarea){display:none!important}#printarea{display:block;color:#000;background:#fff;font:12px/1.4 Arial,sans-serif;padding:0}#printarea h1{font-size:20px;margin:0}#printarea h2{font-size:14px;margin:16px 0 6px}#printarea .pm{margin:2px 0 8px;color:#444}#printarea table{width:100%;border-collapse:collapse}#printarea th,#printarea td{border-bottom:1px solid #bbb;padding:4px 6px;text-align:left}#printarea .r{text-align:right}#printarea tr{break-inside:avoid}}
+@media (min-width:900px){.top{position:static}.stat{position:fixed;top:12px;right:20px;z-index:6;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}.syncp{max-width:none}}
 @media (min-width:900px){.nav button.on::before{top:22%;bottom:22%;left:0;right:auto;width:3px;height:auto;border-radius:0 3px 3px 0}}
 </style>
 </head>
@@ -285,6 +294,7 @@ function device(){var u=navigator.userAgent||'';if(/iPhone|iPad|iPod/.test(u))re
 function initial(n){return esc((String(n||'?').trim()[0]||'?').toUpperCase())}
 function photoUrl(it){return it&&it.photoId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(it.photoId)+'&sz=w480&v='+(it.photoVer||0):''}
 var ICONS={
+ print:'<path d="M7 9V3.500h10V9"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v6.500H7z"/>',
  cash:'<rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M5.5 9.5v.01M18.5 14.5v.01"/>',
  wallet:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18v3.5"/><path d="M3 7.5V18a2 2 0 0 0 2 2h14a1.5 1.5 0 0 0 1.5-1.5V16"/><path d="M21 9.5h-4a2.250 2.250 0 0 0 0 4.500h4z"/>',
  cart:'<circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.500 3.500h3l2.600 12a2 2 0 0 0 2 1.600h7.500a2 2 0 0 0 2-1.500L21 7.500H6.200"/>',
@@ -512,7 +522,7 @@ function loginView(){
   if(S.loadErr)h+='<div class="note warn">'+esc(S.loadErr)+'</div><button class="btn soft" data-act="retry">Try again</button>';
   h+='<div class="stack" style="gap:10px">';
   S.pubAccounts.forEach(function(a){
-   h+='<button class="tile-acc" data-act="pick" data-id="'+esc(a.id)+'"><span class="avatar">'+initial(a.name)+'</span><span class="grow"><b>'+esc(a.name)+'</b></span><span class="chip '+(a.role==='admin'?'admin':a.role==='user'?'user':'')+'">'+esc(a.role)+'</span></button>';
+   h+='<button class="tile-acc" data-act="pick" data-id="'+esc(a.id)+'">'+av(a,44)+'<span class="grow"><b>'+esc(a.name)+'</b></span></button>';
   });
   if(S.ready&&!S.pubAccounts.length&&!S.loadErr)h+='<div class="empty"><b>No accounts yet</b><span class="sm">Run setup in the Apps Script editor first.</span></div>';
   if(!S.ready)h+='<p class="muted">Opening the store...</p>';
@@ -565,7 +575,7 @@ function saleRow(s){
 }
 function glPartners(){return S.accounts.filter(function(a){return a.glPartner!==false}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)})}
 function av(a,sz){
- sz=sz||38;var u=a&&a.photoId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(a.photoId)+'&sz=w256&v='+(a.photoVer||0):'';
+ sz=sz||38;var u=a&&a.photoId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(a.photoId)+'&sz=w256&v='+(a.photoVer||0):(a&&a.id?'photos/'+encodeURIComponent(a.id)+'.jpg':'');
  return '<span class="avatar" style="width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*.42)+'px">'+(u?'<img src="'+esc(u)+'" alt="" data-fb="av" data-i="'+initial(a&&a.name)+'" referrerpolicy="no-referrer">':initial(a&&a.name))+'</span>';
 }
 function homeView(me){
@@ -583,6 +593,7 @@ function homeView(me){
   h+='<div class="li'+(mine?' me':'')+'">'+av(a,38)+'<span class="grow"><b>'+esc(a.name)+'</b>'+(mine?' <span class="chip ok">You</span>':'')+'<div class="sm muted">'+(a.partner!==false?'Drinks '+php(d):'')+(a.partner!==false&&a.glPartner!==false?' · ':'')+(a.glPartner!==false?'GCash and Load '+php(g):'')+'</div></span><span class="amt">'+php(r2(d+g))+'</span></div>';
  });
  h+='</div></div>';
+ h+=printBtn();
  h+='<div class="stack" style="gap:10px"><div class="cat-head"><h2>Drinks</h2>'+(canEdit?'<button class="btn primary sm" data-act="additem">'+ic('plus',18)+'Add drink</button>':'')+'</div>';
  if(S.items.length)h+='<input id="q" class="search" type="search" placeholder="Search drinks" value="'+esc(S.q)+'" autocomplete="off">';
  h+='<div id="grid">'+gridHtml()+'</div></div>';
@@ -592,7 +603,7 @@ function homeView(me){
 }
 function salesView(me){
  var list=liveSales(S.month),t=totals(list),every=allSales(S.month);
- var h='<h2>Sales</h2>'+monthPills();
+ var h='<div class="row between"><h2>Sales</h2>'+printBtn(true)+'</div>'+monthPills();
  h+='<div class="tiles"><div class="tile"><span class="sm muted">Sales</span><span class="v">'+php(t.revenue)+'</span></div><div class="tile"><span class="sm muted">Cost</span><span class="v">'+php(t.cost)+'</span></div><div class="tile"><span class="sm muted">Profit</span><span class="v '+(t.profit>=0?'pos':'neg')+'">'+php(t.profit)+'</span></div></div>';
  if(!every.length)return h+'<div class="empty"><b>No sales in '+esc(mlabel(S.month))+'</b><span class="sm">Sales recorded from the Home page show up here.</span></div>';
  var by={};
@@ -664,7 +675,7 @@ function adminView(me){
 }
 
 /* ================= draw ================= */
-function render(){if(S.raf)return;if(document.activeElement&&document.activeElement.id==='q')return;S.raf=requestAnimationFrame(function(){S.raf=0;draw()})}
+function render(){if(S.raf)return;if(document.activeElement&&(document.activeElement.id==='q'||(document.activeElement.classList&&document.activeElement.classList.contains('rin'))))return;S.raf=requestAnimationFrame(function(){S.raf=0;draw()})}
 function draw(){
  if(!S.token||S.flow||!S.me){$app.innerHTML=loginView();if(S.flow)S.flow.shake=false;return}
  var me=cur(),tabs=[['home','Home','home'],['sales','Sales','cart'],['gcash','GCash','wallet'],['money','Money','cash'],['profile','Profile','person']];
@@ -917,7 +928,12 @@ function gLive(m){return gAll(m).filter(function(g){return g.status!=='void'})}
 function gFees(list){var x=0;list.forEach(function(g){x+=g.fee||0});return r2(x)}
 function gShare(list,id){var x=0;list.forEach(function(g){x+=(g.shares&&g.shares[id])||0});return r2(x)}
 function gTypeName(t){return t==='out'?'Cash out':t==='load'?'Load':'Cash in'}
-function loadFee(a){var c=S.loadCfg||{step:50,fee:5};a=Number(a);return a>0?r2(Math.ceil(a/c.step-1e-9)*c.fee):null}
+function loadFee(a){
+ var c=S.loadCfg||{step:50,fee:5},l=(c.ranges&&c.ranges.length)?c.ranges:null;a=Number(a);if(!(a>0))return null;
+ if(!l){l=[];for(var i=0;i<10;i++)l.push([i*50+1,i*50+50,(i+1)*5])}
+ for(var j=0;j<l.length;j++)if(a>l[j][0]-1&&a<=l[j][1])return Number(l[j][2]);
+ var last=l[l.length-1];return a>last[1]?r2(Number(last[2])+Math.ceil((a-last[1])/c.step-1e-9)*c.fee):null;
+}
 function feeOf(type,a){return type==='load'?loadFee(a):feeFor(a)}
 function walletBal(w){return S.money?(w==='load'?S.money.loadBal:S.money.gcashBal):0}
 function walletTiles(){
@@ -962,17 +978,44 @@ function importsList(){
   return '<div class="li"><div class="grow"><b>'+esc(i.fileName||'Statement')+'</b><div class="sm muted">'+esc(dtLabel(i.at))+' by '+esc(i.byName)+'</div><div class="sm">'+i.rowsRead+' rows read, '+i.added+' added, '+i.corrected+' corrected, '+i.linked+' linked</div></div></div>';
  }).join('')+'</div></div>';
 }
-function ratesCard(){
- var txt=rateList().map(function(r){return r.join(', ')}).join('\n');
- return '<div class="card stack"><div><h3>GCash rate card</h3><p class="sm muted" style="margin:4px 0 0">One line per range: first amount, last amount, fee. Check these against the printed card. Amounts above the last range need a fee typed in by hand.</p></div><div class="field"><label for="rates">Ranges</label><textarea id="rates" rows="10" spellcheck="false" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:14px var(--font-num);color:var(--ink)">'+esc(txt)+'</textarea></div><div class="err" id="rates-err"></div><button class="btn primary" data-act="saverates">Save rate card</button></div>';
+/* rate tables: one line per range, three boxes, locked after saving */
+function rateRows(k){return k==='load'?((S.loadCfg&&S.loadCfg.ranges&&S.loadCfg.ranges.length)?S.loadCfg.ranges:[[1,50,5],[51,100,10],[101,150,15],[151,200,20],[201,250,25],[251,300,30],[301,350,35],[351,400,40],[401,450,45],[451,500,50]]):rateList()}
+function rateTable(k){
+ var isL=k==='load',ed=S.redit&&S.redit[k],d=ed?S.rdraft[k]:rateRows(k).map(function(r){return r.slice()});
+ var h='<div class="card stack" id="rt-'+k+'"><div><h3>'+(isL?'Load charge matrix':'GCash rate card')+'</h3><p class="sm muted" style="margin:4px 0 0">'+(ed?'Change the boxes, then tap Save. Each line is: start of the range, end of the range, and the charge.':'Locked. The app reads these lines by itself when it works out the fee. Tap Edit to change them.')+'</p></div>';
+ h+='<div class="rrow rhead"><span>From</span><span>To</span><span>'+(isL?'Charge':'Fee')+'</span><span></span></div>';
+ d.forEach(function(r,i){
+  h+='<div class="rrow"><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(r[0])+'" data-k="'+k+'" data-i="'+i+'" data-c="0" aria-label="From"'+(ed?'':' disabled')+'><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(r[1])+'" data-k="'+k+'" data-i="'+i+'" data-c="1" aria-label="To"'+(ed?'':' disabled')+'><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(r[2])+'" data-k="'+k+'" data-i="'+i+'" data-c="2" aria-label="Fee"'+(ed?'':' disabled')+'>'+(ed?'<button class="iconbtn" data-act="rdel" data-k="'+k+'" data-i="'+i+'" aria-label="Remove this line">'+ic('trash',20)+'</button>':'<span></span>')+(isL&&!ed?'<span class="rtot sm muted">Total pay '+php(Number(r[0])+Number(r[2]))+' to '+php(Number(r[1])+Number(r[2]))+'</span>':'')+'</div>';
+ });
+ if(isL){
+  var c=S.loadCfg||{step:50,fee:5},ex=ed?S.rdraft.loadx:{step:c.step,fee:c.fee};
+  h+='<div class="rextra"><div class="sm"><b>Above the last range</b>, add this charge for every extra step:</div><div class="rrow"><label class="sm muted" style="grid-column:span 1">Every</label><input class="rin" type="number" inputmode="numeric" min="1" value="'+esc(ex.step)+'" data-k="load" data-x="step" aria-label="Every how much"'+(ed?'':' disabled')+'><input class="rin" type="number" inputmode="decimal" min="0" step="any" value="'+esc(ex.fee)+'" data-k="load" data-x="fee" aria-label="Extra charge"'+(ed?'':' disabled')+'><span class="sm muted">Example: every 50, add 5</span></div></div>';
+ }
+ h+='<div class="err" id="rt-err-'+k+'"></div>';
+ h+=ed?'<div class="wrapbtns"><button class="btn primary grow" data-act="rsave" data-k="'+k+'">Save</button><button class="btn soft" data-act="radd" data-k="'+k+'">'+ic('plus',18)+'Add another range</button><button class="btn ghost" data-act="rcancel" data-k="'+k+'">Cancel</button></div>':'<button class="btn soft" data-act="redit" data-k="'+k+'">'+ic('edit',18)+'Edit</button>';
+ return h+'</div>';
 }
-async function saveRatesFromUi(){
- var t=document.getElementById('rates').value,err=document.getElementById('rates-err'),rows=[];
- var ok=t.split('\n').every(function(l){l=l.trim();if(!l)return true;var p=l.split(/[\s,;]+/).map(Number);if(p.length!==3||p.some(isNaN))return false;rows.push(p);return true});
- if(!ok||!rows.length){err.textContent='Each line needs three numbers: first amount, last amount, fee.';return}
- try{await api('saveRates',{rates:rows});err.textContent='';toast('Rate card saved')}catch(e){err.textContent=e.message}
+function ratesCard(){return rateTable('gcash')}
+function rateStart(k){
+ S.redit=S.redit||{};S.rdraft=S.rdraft||{};S.redit[k]=true;S.rdraft[k]=rateRows(k).map(function(r){return r.slice()});
+ if(k==='load'){var c=S.loadCfg||{step:50,fee:5};S.rdraft.loadx={step:c.step,fee:c.fee}}
+ draw();
 }
-
+function rateAdd(k){
+ var d=S.rdraft[k],last=d[d.length-1],from=last?Number(last[1])+1:1,step=last?Math.max(1,Number(last[1])-Number(last[0])+1):500,fee=last?r2(Number(last[2])+(k==='load'?(S.loadCfg&&S.loadCfg.fee)||5:10)):0;
+ d.push([from,from+step-1,fee]);draw();
+ var rows=document.querySelectorAll('#rt-'+k+' .rrow:not(.rhead)');var el=rows[d.length-1];if(el){var i=el.querySelector('input');if(i)i.scrollIntoView({block:'center'})}
+}
+async function rateSave(k){
+ var err=document.getElementById('rt-err-'+k),d=S.rdraft[k];
+ for(var i=0;i<d.length;i++){for(var c=0;c<3;c++){if(d[i][c]===''||isNaN(Number(d[i][c]))){err.textContent='Line '+(i+1)+' has an empty box. Fill it in or remove the line.';return}}}
+ var rows=d.map(function(r){return [Number(r[0]),Number(r[1]),Number(r[2])]});
+ try{
+  if(k==='load'){var x=S.rdraft.loadx;await api('saveLoadRates',{rates:rows,step:x.step,fee:x.fee})}
+  else await api('saveRates',{rates:rows});
+  S.redit[k]=false;draw();toast((k==='load'?'Load charge matrix':'GCash rate card')+' saved and locked');
+ }catch(e){err.textContent=e.message}
+}
 /* record a transaction */
 function openGcash(kind){
  var me=cur(),ps=partners(),isL=kind==='load',type=isL?'load':'in',custom=false,nets=['Globe','Smart','TNT','GOMO','DITO','Other'],net='Globe';
@@ -980,7 +1023,7 @@ function openGcash(kind){
  (isL?'<div class="field"><label>Network</label><div class="seg" id="gc-net">'+nets.map(function(n,i){return '<button type="button" class="'+(i?'':'on')+'" data-n="'+n+'">'+n+'</button>'}).join('')+'</div></div>':'<div class="seg" id="gc-type"><button class="on" data-t="in">Cash in</button><button data-t="out">Cash out</button></div><p class="sm muted" id="gc-help" style="margin:0"></p>')+
  '<div class="field"><label for="gc-a">'+(isL?'Load amount (PHP)':'Amount (PHP)')+'</label><input id="gc-a" type="number" inputmode="decimal" min="1" step="'+(isL?'1':'0.01')+'" data-focus></div>'+
  '<div class="field"><label for="gc-f">Fee (PHP) <button type="button" class="btn ghost sm" id="gc-chg" style="min-height:0;padding:2px 8px">Change</button></label><input id="gc-f" type="number" inputmode="decimal" min="0" step="0.01" readonly></div>'+
- '<div class="field" id="gc-nw" hidden><label for="gc-fn">Why is the fee different?</label><input id="gc-fn" type="text" maxlength="120"></div>'+
+ '<div class="field" id="gc-nw" hidden><label for="gc-fn">Why is the fee different? (optional)</label><input id="gc-fn" type="text" maxlength="120"></div>'+
  (isL?'':'<div class="field"><label for="gc-ref">GCash reference number (optional)</label><input id="gc-ref" type="text" inputmode="numeric" maxlength="24"></div>')+
  '<div class="receipt" id="gc-rc"></div><div class="err" id="gc-err"></div>'+
  '<div class="wrapbtns"><button class="btn primary grow" id="gc-go">'+(isL?'Record load sale':'Record')+'</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
@@ -1315,10 +1358,11 @@ function moneyView(me){
  var h='<div class="cat-head"><h2>Money</h2></div>';
  h+='<div class="hero"><div class="lbl">Capital left, not yet used</div><div class="big num">'+php(left)+'</div><div class="sub"><span>Capital <b class="num">'+php(m.capital)+'</b></span></div></div>';
  if(left<0)h+='<div class="note warn">More was spent than the capital. The extra came from sales money.</div>';
- h+='<div class="receipt"><div class="r"><span>Capital</span><span>'+php(m.capital)+'</span></div><div class="r"><span>Drinks and other things bought</span><span>- '+php(m.drinksBought)+'</span></div><div class="r"><span>Put in the GCash wallet</span><span>- '+php(m.topG)+'</span></div><div class="r"><span>Put in the Load wallet</span><span>- '+php(m.topL)+'</span></div><hr><div class="r tot"><span>Capital left</span><span class="'+(left<0?'neg':'')+'">'+php(left)+'</span></div></div>';
+ h+='<div class="receipt"><div class="r"><span>Capital</span><span>'+php(m.capital)+'</span></div><div class="r"><span>Drinks and other things bought</span><span>- '+php(m.drinksBought)+'</span></div><div class="r"><span>Top ups paid from capital</span><span>- '+php(m.topCapital)+'</span></div><hr><div class="r tot"><span>Capital left</span><span class="'+(left<0?'neg':'')+'">'+php(left)+'</span></div></div>';
  h+=walletTiles();
+ h+='<div class="card stack" style="gap:6px"><b>Where wallet top ups came from</b><div class="row between"><span class="sm">Capital</span><span class="num">'+php(m.topCapital)+'</span></div><div class="row between"><span class="sm">Drawer cash (cycled money)</span><span class="num">'+php(m.topDrawer)+'</span></div><div class="row between"><span class="sm">Own money put in</span><span class="num">'+php(m.topOwn)+'</span></div><div class="sm muted">Only top ups from capital lower the capital. Drawer cash lowers the cash in the drawer. Own money lowers neither.</div></div>';
  if(canEdit)h+='<div class="wrapbtns"><button class="btn soft" data-act="topup" data-w="gcash">'+ic('plus',18)+'Top up GCash</button><button class="btn soft" data-act="topup" data-w="load">'+ic('plus',18)+'Top up Load</button></div>';
- h+='<div class="card stack" style="gap:6px"><div class="row between"><span>Cash that should be in the drawer</span><b class="num">'+php(m.cashExpected)+'</b></div><div class="sm muted">Capital left, plus all drink sales, plus cash in with fees, minus cash given for cash out, plus load sales with fees. It is before any profit is paid out to partners.</div></div>';
+ h+='<div class="card stack" style="gap:6px"><div class="row between"><span>Cash that should be in the drawer</span><b class="num">'+php(m.cashExpected)+'</b></div><div class="sm muted">Capital left, plus all drink sales, plus cash in with fees, minus cash given for cash out, plus load sales with fees, minus top ups paid from drawer cash. It is before any profit is paid out to partners.</div></div>';
  /* purchases */
  var pur=(S.purchases||[]).slice().sort(function(a,b){return b.at-a.at}).slice(0,25);
  h+='<div class="stack" style="gap:8px"><div class="cat-head"><h3>Bought (expenses)</h3>'+(canEdit?'<button class="btn primary sm" data-act="buy">'+ic('plus',18)+'Add</button>':'')+'</div>';
@@ -1335,33 +1379,54 @@ function moneyView(me){
  var tp=(S.topups||[]).slice().sort(function(a,b){return b.at-a.at}).slice(0,25);
  if(tp.length)h+='<div class="stack" style="gap:8px"><h3>Top ups</h3><div class="list">'+tp.map(function(t){
   var v=t.status==='void';
-  return '<button class="li lib'+(v?' voided':'')+'" data-act="titem" data-id="'+esc(t.id)+'"><div class="grow"><div><b>'+(t.wallet==='load'?'Load':'GCash')+' wallet</b>'+(v?' <span class="chip admin">Voided</span>':'')+'</div><div class="sm muted">'+esc(dtLabel(t.at))+' by '+esc(t.byName)+(t.note?' · '+esc(t.note):'')+'</div></div><div class="amt amt1 pos">+'+php(t.amount)+'</div></button>';
+  return '<button class="li lib'+(v?' voided':'')+'" data-act="titem" data-id="'+esc(t.id)+'"><div class="grow"><div><b>'+(t.wallet==='load'?'Load':'GCash')+' wallet</b>'+(v?' <span class="chip admin">Voided</span>':'')+' <span class="chip">'+fundName(t.fund)+'</span>'+'</div><div class="sm muted">'+esc(dtLabel(t.at))+' by '+esc(t.byName)+(t.note?' · '+esc(t.note):'')+'</div></div><div class="amt amt1 pos">+'+php(t.amount)+'</div></button>';
  }).join('')+'</div></div>';
  return h;
 }
+var FUNDS=[['capital','Capital','Money from the starting capital.'],['drawer','Drawer cash','Cash already in the store drawer from customers (sales, cash in). Use this when you top up again with 7-Eleven, M Lhuillier or any outlet.'],['own','My own money','Your personal money, not from the store. The capital and the drawer do not go down.']];
+function fundName(f){return f==='drawer'?'Drawer cash':f==='own'?'Own money':'Capital'}
 function openTopup(w){
- var isL=w==='load';
- openSheet(head('Top up '+(isL?'Load':'GCash')+' wallet')+'<p class="sm muted" style="margin:0">Type the amount you added to the '+(isL?'Load':'GCash')+' wallet. It counts as money used from the capital.</p>'+
+ var isL=w==='load',m0=S.money||{},fund=((S.topups||[]).some(function(t){return t.status!=='void'})||(m0.capitalLeft||0)<1)?'drawer':'capital';
+ openSheet(head('Top up '+(isL?'Load':'GCash')+' wallet')+'<p class="sm muted" style="margin:0">Type the amount you added to the '+(isL?'Load':'GCash')+' wallet, then choose where the money came from.</p>'+
  '<div class="field"><label for="tp-a">Amount (PHP)</label><input id="tp-a" type="number" inputmode="decimal" min="1" step="0.01" data-focus></div>'+
- '<div class="field"><label for="tp-n">Note (optional)</label><input id="tp-n" type="text" maxlength="80" placeholder="Example: loaded from the bank"></div>'+
+ '<div class="field"><label>Where did this money come from?</label><div class="seg" id="tp-f">'+FUNDS.map(function(f){return '<button type="button" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div><div class="sm muted" id="tp-fh"></div></div>'+
+ '<div class="field"><label for="tp-n">Note (optional)</label><input id="tp-n" type="text" maxlength="80" placeholder="Example: 7-Eleven, M Lhuillier"></div>'+
  '<div class="receipt" id="tp-rc"></div><div class="err" id="tp-err"></div>'+
  '<div class="wrapbtns"><button class="btn primary grow" id="tp-go">Add top up</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
   function g(i){return p.querySelector('#'+i)}
-  function upd(){var a=r2(g('tp-a').value),m=S.money||{},b=walletBal(w);g('tp-rc').innerHTML=a>0?'<div class="r muted"><span>Wallet now</span><span>'+php(b)+'</span></div><div class="r tot"><span>Wallet after</span><span>'+php(b+a)+'</span></div><hr><div class="r muted"><span>Capital left after</span><span>'+php((m.capitalLeft||0)-a)+'</span></div>':'';g('tp-rc').hidden=!(a>0)}
-  g('tp-a').addEventListener('input',upd);upd();
+  function upd(){
+   var a=r2(g('tp-a').value),m=S.money||{},b=walletBal(w);
+   [].forEach.call(g('tp-f').children,function(x){x.classList.toggle('on',x.dataset.f===fund)});
+   g('tp-fh').textContent=FUNDS.filter(function(f){return f[0]===fund})[0][2];
+   var h='';
+   if(a>0){
+    h='<div class="r muted"><span>Wallet now</span><span>'+php(b)+'</span></div><div class="r tot"><span>Wallet after</span><span>'+php(b+a)+'</span></div><hr>';
+    if(fund==='capital')h+='<div class="r muted"><span>Capital left after</span><span>'+php((m.capitalLeft||0)-a)+'</span></div>';
+    else if(fund==='drawer')h+='<div class="r muted"><span>Drawer cash after</span><span>'+php((m.cashExpected||0)-a)+'</span></div>';
+    else h+='<div class="r muted"><span>Capital and drawer</span><span>No change</span></div>';
+    if(fund==='capital'&&(m.capitalLeft||0)<a)h+='<div class="note warn">Capital left is only '+php(m.capitalLeft||0)+'. Choose Drawer cash or My own money.</div>';
+    if(fund==='drawer'&&(m.cashExpected||0)<a)h+='<div class="note warn">The drawer should only have '+php(m.cashExpected||0)+'.</div>';
+   }
+   g('tp-rc').innerHTML=h;g('tp-rc').hidden=!(a>0);
+  }
+  g('tp-a').addEventListener('input',upd);
+  g('tp-f').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;fund=b.dataset.f;upd()});
+  upd();
   g('tp-go').addEventListener('click',async function(){
    var a=r2(g('tp-a').value),err=g('tp-err');if(!(a>0)){err.textContent='Enter the amount.';return}
    this.disabled=true;err.textContent='';
-   submit('addTopup',{wallet:w,amount:a,note:g('tp-n').value.trim()},(isL?'Load':'GCash')+' top up '+php(a));closeSheet();toast(S.offline?'Saved on this phone. It sends when the internet is back.':'Top up added');
+   submit('addTopup',{wallet:w,amount:a,fund:fund,note:g('tp-n').value.trim()},(isL?'Load':'GCash')+' top up '+php(a));closeSheet();toast(S.offline?'Saved on this phone. It sends when the internet is back.':'Top up added');
   });
  });
 }
 function openTopupDetail(id){
  var t=(S.topups||[]).filter(function(x){return x.id===id})[0];if(!t)return;
  var h=head((t.wallet==='load'?'Load':'GCash')+' top up')+'<div class="receipt"><div class="r tot"><span>Amount</span><span>'+php(t.amount)+'</span></div></div><div class="stamp">'+ic('clock',16)+'<span>Added by <b>'+esc(t.byName)+'</b> on '+esc(dtLabel(t.at))+'</span></div>'+(t.note?'<div class="sm">'+esc(t.note)+'</div>':'');
+ h+='<div class="sm"><b>Money came from:</b> '+fundName(t.fund)+'</div>';
+ if(t.status!=='void'&&canTouch(t))h+='<div class="field"><label>Change where it came from</label><div class="seg" id="tf">'+FUNDS.map(function(f){return '<button type="button" class="'+((t.fund||'capital')===f[0]?'on':'')+'" data-f="'+f[0]+'">'+f[1]+'</button>'}).join('')+'</div></div>';
  if(t.status==='void')h+='<div class="note warn"><b>Voided</b> by '+esc(t.voidedByName)+' on '+esc(dtLabel(t.voidedAt))+'.<br>Reason: '+esc(t.voidReason)+'</div>';
  else if(canTouch(t))h+='<div class="wrapbtns"><button class="btn danger" id="vt">'+ic('trash',18)+'Void top up</button></div>';
- openSheet(h,function(p){var b=p.querySelector('#vt');if(b)b.addEventListener('click',function(){voidSheet('Void this top up?','The wallet goes down by '+php(t.amount)+'. It stays on record with your name, the time, and the reason.','voidTopup',t.id)})});
+ openSheet(h,function(p){var tf=p.querySelector('#tf');if(tf)tf.addEventListener('click',async function(e){var x=e.target.closest('button');if(!x||x.dataset.f===(t.fund||'capital'))return;try{await api('setTopupFund',{id:t.id,fund:x.dataset.f});closeSheet();toast('Updated')}catch(er){toast(er.message)}});var b=p.querySelector('#vt');if(b)b.addEventListener('click',function(){voidSheet('Void this top up?','The wallet goes down by '+php(t.amount)+'. It stays on record with your name, the time, and the reason.','voidTopup',t.id)})});
 }
 function voidSheet(title,body,action,id){
  openSheet(head(title)+'<p style="margin:0">'+esc(body)+'</p><div class="field"><label for="vs-r">Reason</label><input id="vs-r" type="text" maxlength="200" data-focus></div><div class="err" id="vs-err"></div><div class="wrapbtns"><button class="btn danger" id="vs-go">Void</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
@@ -1415,14 +1480,7 @@ function openPurchase(){
   });
  });
 }
-function loadRatesCard(){
- var c=S.loadCfg||{step:50,fee:5};
- return '<div class="card stack"><div><h3>Load fee</h3><p class="sm muted" style="margin:4px 0 0">The fee is charged for every step of the load amount. Example: step 50 and fee 5 means load 1 to 50 costs 5, load 51 to 100 costs 10, and it goes up by 5 for every 50 more.</p></div><div class="two"><div class="field"><label for="ld-s">Step (PHP)</label><input id="ld-s" type="number" inputmode="numeric" min="1" value="'+c.step+'"></div><div class="field"><label for="ld-f">Fee per step (PHP)</label><input id="ld-f" type="number" inputmode="decimal" min="0" step="0.01" value="'+c.fee+'"></div></div><div class="err" id="ld-err"></div><button class="btn primary" data-act="saveload">Save load fee</button></div>';
-}
-async function saveLoadFromUi(){
- var err=document.getElementById('ld-err');
- try{await api('saveLoadRates',{step:document.getElementById('ld-s').value,fee:document.getElementById('ld-f').value});err.textContent='';toast('Load fee saved')}catch(e){err.textContent=e.message}
-}
+function loadRatesCard(){return rateTable('load')}
 
 /* reading GCash and bank texts */
 function smsCard(){
@@ -1439,8 +1497,29 @@ function smsCard(){
  '<button class="btn ghost sm" data-act="newkey">Make a new key</button></div>';
 }
 
+function printBtn(small){return '<button class="btn soft'+(small?' sm':'')+'" data-act="print">'+ic('print',18)+'Print report</button>'}
+function printReport(){
+ var m=S.month,me=cur(),list=liveSales(m).slice().sort(function(a,b){return a.at-b.at}),t=totals(list),gl=gLive(m).slice().sort(function(a,b){return a.at-b.at}),gf=gFees(gl),total=r2(t.profit+gf);
+ var ps=partners(),gps=glPartners(),mo=S.money||{};
+ var people=S.accounts.filter(function(a){return a.partner!==false||a.glPartner!==false}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
+ var by={};list.forEach(function(s){var k=s.itemId||s.itemName;var o=by[k]||(by[k]={name:s.itemName,b:0,c:0,rev:0,p:0});if(s.unit==='case')o.c+=s.qty;else o.b+=s.qty;o.rev+=s.revenue||0;o.p+=s.profit||0});
+ var rows=Object.keys(by).map(function(k){return by[k]}).sort(function(a,b){return b.p-a.p});
+ var h='<h1>TindaKita Report</h1><p class="pm">'+esc(mlabel(m))+'. Printed '+esc(dtLabel(Date.now()))+(me?' by '+esc(me.name):'')+'</p>';
+ h+='<h2>Summary</h2><table><tbody><tr><td>Drink sales</td><td class="r">'+php(t.revenue)+'</td></tr><tr><td>Drink cost</td><td class="r">'+php(t.cost)+'</td></tr><tr><td>Drinks profit</td><td class="r">'+php(t.profit)+'</td></tr><tr><td>GCash and Load fees</td><td class="r">'+php(gf)+'</td></tr><tr><td><b>Total profit</b></td><td class="r"><b>'+php(total)+'</b></td></tr></tbody></table>';
+ h+='<h2>Share of the profit</h2><table><thead><tr><th>Name</th><th class="r">Drinks</th><th class="r">GCash and Load</th><th class="r">Total</th></tr></thead><tbody>'+people.map(function(a){var d=a.partner!==false?shareOf(list,a.id):0,g=a.glPartner!==false?gShare(gl,a.id):0;return '<tr><td>'+esc(a.name)+'</td><td class="r">'+php(d)+'</td><td class="r">'+php(g)+'</td><td class="r"><b>'+php(r2(d+g))+'</b></td></tr>'}).join('')+'</tbody></table>';
+ if(rows.length)h+='<h2>Drinks sold</h2><table><thead><tr><th>Drink</th><th class="r">Bottles</th><th class="r">Cases</th><th class="r">Sales</th><th class="r">Profit</th></tr></thead><tbody>'+rows.map(function(o){return '<tr><td>'+esc(o.name)+'</td><td class="r">'+o.b+'</td><td class="r">'+o.c+'</td><td class="r">'+php(o.rev)+'</td><td class="r">'+php(o.p)+'</td></tr>'}).join('')+'</tbody></table>';
+ if(gl.length)h+='<h2>GCash and Load</h2><table><thead><tr><th>Date and time</th><th>Type</th><th class="r">Amount</th><th class="r">Fee</th><th>By</th></tr></thead><tbody>'+gl.map(function(g){return '<tr><td>'+esc(dtLabel(g.at))+'</td><td>'+gTypeName(g.type)+'</td><td class="r">'+php(g.amount)+'</td><td class="r">'+php(g.fee)+'</td><td>'+esc(g.byName)+'</td></tr>'}).join('')+'</tbody></table>';
+ if(list.length)h+='<h2>All drink sales</h2><table><thead><tr><th>Date and time</th><th>Drink</th><th class="r">Qty</th><th class="r">Sales</th><th class="r">Profit</th><th>By</th></tr></thead><tbody>'+list.map(function(s){return '<tr><td>'+esc(dtLabel(s.at))+'</td><td>'+esc(s.itemName)+'</td><td class="r">'+s.qty+' '+(s.unit==='case'?'case':'btl')+'</td><td class="r">'+php(s.revenue)+'</td><td class="r">'+php(s.profit)+'</td><td>'+esc(s.byName)+'</td></tr>'}).join('')+'</tbody></table>';
+ if(mo&&mo.capitalLeft!==undefined)h+='<h2>Money now</h2><table><tbody><tr><td>Capital left</td><td class="r">'+php(mo.capitalLeft)+'</td></tr><tr><td>GCash wallet</td><td class="r">'+php(mo.gcashBal)+'</td></tr><tr><td>Load wallet</td><td class="r">'+php(mo.loadBal)+'</td></tr><tr><td>Cash that should be in the drawer</td><td class="r">'+php(mo.cashExpected)+'</td></tr></tbody></table>';
+ var pa=document.getElementById('printarea');if(!pa){pa=document.createElement('div');pa.id='printarea';document.body.appendChild(pa)}
+ pa.innerHTML=h;
+ try{window.print()}catch(x){toast('Printing is not available here')}
+}
+
 /* ================= events ================= */
 $app.addEventListener('input',function(e){
+ var t=e.target;
+ if(t.classList&&t.classList.contains('rin')&&S.rdraft){var k=t.dataset.k;if(t.dataset.x){S.rdraft.loadx[t.dataset.x]=t.value}else if(S.rdraft[k]){S.rdraft[k][+t.dataset.i][+t.dataset.c]=t.value}return}
  if(e.target.id==='q'){S.q=e.target.value;var g=document.getElementById('grid');if(g)g.innerHTML=gridHtml()}
 });
 $app.addEventListener('change',async function(e){
@@ -1469,6 +1548,7 @@ $app.addEventListener('click',async function(e){
  else if(a==='refresh')sync(true);
  else if(a==='dismissfail'){S.failed.splice(+id,1);draw()}
  else if(a==='photo'){var pf=document.getElementById('pf-file');if(pf)pf.click()}
+ else if(a==='print'){printReport()}
  else if(a==='copy'){try{navigator.clipboard.writeText(b.dataset.v);toast('Copied')}catch(x){toast('Press and hold to copy')}}
  else if(!me)return;
  else if(a==='item'){var it=S.items.filter(function(x){return x.id===id})[0];if(!it)return;if(me.role==='viewer')openDetails(it);else openSale(it)}
@@ -1497,9 +1577,12 @@ $app.addEventListener('click',async function(e){
   var d=byId(id);if(!d)return;
   confirmSheet('Remove '+d.name+'?','The account and PIN are deleted. Past sales stay in the records.','Remove account',function(){return api('deleteAccount',{id:id})},true);
  }
- else if(a==='saverates')saveRatesFromUi();
+ else if(a==='redit')rateStart(b.dataset.k)
+ else if(a==='radd')rateAdd(b.dataset.k)
+ else if(a==='rcancel'){S.redit[b.dataset.k]=false;draw()}
+ else if(a==='rsave')rateSave(b.dataset.k)
+ else if(a==='rdel'){S.rdraft[b.dataset.k].splice(+b.dataset.i,1);draw()}
  else if(a==='newkey')confirmSheet('Make a new key?','The old key stops working. You must paste the new link into the forwarding app on the phone.','Make new key',function(){return api('saveSms',{newKey:true})});
- else if(a==='saveload')saveLoadFromUi();
  else if(a==='savecap'){
   var val=Number(document.getElementById('cap').value)||0;
   try{await api('saveSettings',{capital:val});toast('Capital saved')}catch(x){toast(x.message)}

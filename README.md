@@ -32,10 +32,7 @@ After you change Code.gs later: Deploy, Manage deployments, click the pencil, ch
 
 ## Part 2. GitHub (the app people open)
 
-1. Open index.html in a text editor. Near the top of the script find this line and paste your Web app URL between the quotes:
-
-   var API_URL='PASTE_YOUR_WEB_APP_URL_HERE';
-
+1. The Web app URL is already inside index.html. You do not need to paste anything. If you ever create a new deployment with a different URL, change the API_URL line near the top of the script.
 2. On GitHub, click New repository. Name it TindaKita and make it Public.
 3. Click Add file, then Upload files. Upload the files listed under "Upload these" above, then click Commit changes.
 4. Go to Settings, then Pages. Under Build and deployment choose Deploy from a branch, pick main and / (root), then Save.
@@ -85,7 +82,8 @@ Viewer: see the drinks, prices, sales, and their own share. A Viewer cannot reco
 2. If you charge a different fee, tap Change and write the reason. Amounts above the rate card (over 10,000) need a fee typed in by hand.
 3. The fee income of GCash is added to the drinks profit and split equally among the partners. Home and Profile show the combined share.
 4. Edit and void work like sales: a reason is required, the time and name are stamped, and the original stays visible.
-5. Admin, Settings has the rate card. Check every line against your printed card and fix any that are wrong. One line per range: first amount, last amount, fee.
+5. Admin, Settings has two rate tables: the GCash rate card and the Load charge matrix. Each line has three boxes: starting amount, end amount and charge. The table is locked. Tap Edit to change it, Add another range for more lines, then Save. When saved it locks again and the app reads it automatically. Check every line against your printed card.
+6. The Load table shows the total the customer pays for each range (for example 1 to 50 costs 6 to 55). For amounts above the last range, the app adds the extra charge for every step (default: 5 for every 50).
 
 ## Working without internet
 
@@ -94,7 +92,27 @@ Viewer: see the drinks, prices, sales, and their own share. A Viewer cannot reco
 3. Without internet you can still record sales, GCash, load, top ups, and purchases. They are saved on the phone, listed as waiting to send, and sent by themselves when the signal returns. The time you entered is kept, and the server also stamps when it received the entry.
 4. Edits and voids need internet.
 
+## Top ups and where the money came from
+
+Every top up asks: Where did this money come from?
+- Capital: money from the starting capital. The capital left goes down.
+- Drawer cash: cash already in the store drawer from customers. Use this when you top up again at 7-Eleven, M Lhuillier or any outlet. The capital does not change. The cash that should be in the drawer goes down.
+- My own money: your personal money. Neither the capital nor the drawer changes.
+The first top up is set to Capital and later ones to Drawer cash, but you can tap another choice. Top ups found from texts or statements are set to Drawer cash. Open any top up in the Money tab to change its source. The Money tab shows the total for each source.
+
+## Photos of Mark, Yda and Mamang Judy
+
+Make a folder named photos in your GitHub repository (Add file, Create new file, type photos/ in the name). Upload three pictures there with exactly these names: mark.jpg, yda.jpg and mamang-judy.jpg. They show on the login screen, Home and Profile automatically. A person can still change their own photo in Profile, and that photo is used instead. Use square pictures if you can.
+
+## Printing reports
+
+Tap Print report on Home or Sales. It prints the month you are viewing: totals, each person's share, drinks sold, GCash and Load lines, and the money now. On a phone choose Save as PDF or your printer.
+
 ## Who shares what
+
+Drinks profit is split evenly. When it cannot split evenly to the centavo, the extra centavos go to Yda so her share is the highest.
+
+
 
 Drinks profit is split among the people marked Shares drinks (Mark, Yda, Mamang Judy). GCash and Load fee income is split among the people marked Shares GCash and Load (Mark and Yda). Admin, Accounts has both tick boxes for every person. A change only affects entries recorded after it.
 
