@@ -275,7 +275,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.10.0',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.11.0',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -379,7 +379,7 @@ async function api(action,data){
 function applyState(st,fromCache){
  var sig=JSON.stringify(st,function(k,v){return k==='serverTime'?undefined:v});var changed=sig!==S.sig||S.offline;S.sig=sig;
  S.me=st.me;S.accounts=st.accounts||[];S.items=(st.items||[]).slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name))});
- S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rev=st.rev||'';S.rates=st.rates||[];S.rateHist=st.rateHist||{gcash:[],load:[]};S.ratesMeta=st.ratesMeta||{};S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
+ S.inbox=st.inbox||[];S.sms=st.sms||null;S.sales=st.sales||[];S.gcash=st.gcash||[];S.gcashLog=st.gcashLog||[];S.rev=st.rev||'';S.rates=st.rates||[];S.rateHist=st.rateHist||{gcash:[],load:[]};S.ratesMeta=st.ratesMeta||{};S.imports=st.imports||[];S.money=st.money||null;S.topups=st.topups||[];S.transfers=st.transfers||[];S.purchases=st.purchases||[];S.loadCfg=st.loadCfg||{step:50,fee:5};S.log=st.log||[];S.logins=st.logins||[];S.capital=st.capital||0;S.syncedAt=fromCache?(st._savedAt||0):Date.now();if(!fromCache)S.offline=false;
  overlay();
  try{var c=JSON.parse(JSON.stringify(st));c._savedAt=fromCache?(st._savedAt||0):Date.now();c.accounts.forEach(function(a){delete a.pin});c.logins=[];localStorage.setItem('tindakita.state',JSON.stringify(c))}catch(e){}
  if(changed)render();
@@ -1044,7 +1044,7 @@ function gcashView(me){
  var h='<div class="cat-head"><h2>'+(isL?'Load':'GCash')+'</h2>'+(canEdit?'<span class="row" style="gap:8px">'+(!isL?'<button class="btn soft sm" data-act="pastesms">Paste message</button>':'')+'<button class="btn primary sm" data-act="gnew" data-k="'+sub+'">'+ic('plus',18)+'Add</button></span>':'')+'</div>';
  h+='<div class="seg" role="tablist"><button class="'+(isL?'':'on')+'" data-act="gsub" data-s="gcash">GCash</button><button class="'+(isL?'on':'')+'" data-act="gsub" data-s="load">Load</button></div>'+monthPills();
  var bal=walletBal(sub);
- h+='<div class="card stack" style="gap:8px"><div class="row between"><div><div class="sm muted">'+(isL?'Load':'GCash')+' wallet, money available now</div><div class="num" style="font-size:24px;font-weight:600">'+php(bal)+'</div></div>'+(canEdit?'<button class="btn soft sm" data-act="topup" data-w="'+sub+'">'+ic('plus',18)+'Top up</button>':'')+'</div>'+
+ h+='<div class="card stack" style="gap:8px"><div class="row between"><div><div class="sm muted">'+(isL?'Load':'GCash')+' wallet, money available now</div><div class="num" style="font-size:24px;font-weight:600">'+php(bal)+'</div></div>'+(canEdit?'<span class="row" style="gap:8px"><button class="btn soft sm" data-act="xfer" data-from="'+sub+'">Move money</button><button class="btn soft sm" data-act="topup" data-w="'+sub+'">'+ic('plus',18)+'Top up</button></span>':'')+'</div>'+
   (bal<1000?'<div class="note warn">'+(bal<=0?'The wallet is empty. ':'Running low. ')+'Add a top up so '+(isL?'load can be sold':'cash in can continue')+'.</div>':'')+'<div class="sm muted">'+(isL?'Each load sold lowers this wallet by the load amount.':'Cash in lowers this wallet. Cash out raises it. Top ups are counted as money spent from the capital.')+'</div></div>';
  if(canEdit&&!isL)h+=inboxHtml();
  h+=topupHist(sub);
@@ -1454,6 +1454,7 @@ function moneyView(me){
  h+='<div class="receipt"><div class="r"><span>Capital</span><span>'+php(m.capital)+'</span></div><div class="r"><span>Drinks and other things bought</span><span>- '+php(m.drinksBought)+'</span></div><div class="r"><span>Top ups paid from capital</span><span>- '+php(m.topCapital)+'</span></div><hr><div class="r tot"><span>Capital left</span><span class="'+(left<0?'neg':'')+'">'+php(left)+'</span></div></div>';
  h+=walletTiles();
  h+='<div class="card stack" style="gap:6px"><b>Where wallet top ups came from</b><div class="row between"><span class="sm">Capital</span><span class="num">'+php(m.topCapital)+'</span></div><div class="row between"><span class="sm">Drawer cash (cycled money)</span><span class="num">'+php(m.topDrawer)+'</span></div><div class="row between"><span class="sm">Own money put in</span><span class="num">'+php(m.topOwn)+'</span></div><div class="sm muted">Only top ups from capital lower the capital. Drawer cash lowers the cash in the drawer. Own money lowers neither.</div></div>';
+ h+=xferCard(canEdit);
  if(canEdit)h+='<div class="wrapbtns"><button class="btn soft" data-act="topup" data-w="gcash">'+ic('plus',18)+'Top up GCash</button><button class="btn soft" data-act="topup" data-w="load">'+ic('plus',18)+'Top up Load</button></div>';
  h+='<div class="card stack" style="gap:6px"><div class="row between"><span>Cash that should be in the drawer</span><b class="num">'+php(m.cashExpected)+'</b></div><div class="sm muted">This is the capital left on the Home page plus the total income. The capital left goes up when drinks are sold (the cost comes back) and goes down when you buy drinks or top up GCash or Load. Total income is the drink profit plus the GCash and Load fees. It is before any profit is paid out to partners.</div></div>';
  /* purchases */
@@ -1884,6 +1885,53 @@ async function shotsSave(btn){
  if(stop)toast(stop);
 }
 
+
+/* ================= move money between wallets ================= */
+function wName(w){return w==='load'?'Load':'GCash'}
+function xferCard(canEdit){
+ var list=(S.transfers||[]).slice().sort(function(a,b){return b.at-a.at}),m=S.money||{};
+ var h='<div class="card stack" style="gap:8px"><b>Moved between wallets</b>'+
+  '<div class="row between"><span class="sm">GCash to Load</span><span class="num">'+php(m.toLoad||0)+'</span></div><div class="row between"><span class="sm">Load to GCash</span><span class="num">'+php(m.toGcash||0)+'</span></div>'+
+  '<div class="sm muted">Moving money between the two wallets is for emergencies. It does not change the capital left, the cash in the drawer, or the income.</div>';
+ if(canEdit)h+='<div class="wrapbtns"><button class="btn soft" data-act="xfer" data-from="gcash">Move GCash to Load</button><button class="btn soft" data-act="xfer" data-from="load">Move Load to GCash</button></div>';
+ if(list.length)h+='<div class="list">'+list.slice(0,8).map(function(t){var v=t.status==='void';return '<button class="li lib'+(v?' voided':'')+'" data-act="xitem" data-id="'+esc(t.id)+'"><div class="grow"><div><b>'+wName(t.from)+' to '+wName(t.to)+'</b> <span class="muted num">'+php(t.amount)+'</span>'+(v?' <span class="chip admin">Voided</span>':'')+'</div><div class="sm muted">'+esc(dtLabel(t.at))+' by '+esc(t.byName)+(t.note?' · '+esc(t.note):'')+'</div></div></button>'}).join('')+'</div>';
+ return h+'</div>';
+}
+function openXfer(from){
+ var m=S.money||{};
+ openSheet(head('Move money between wallets')+
+ '<p style="margin:0">Use this in an emergency, for example when the Load wallet is empty but the GCash wallet has money. The total money stays the same.</p>'+
+ '<div class="field"><label>Direction</label><div class="seg" id="xf-d"><button type="button" class="'+(from==='gcash'?'on':'')+'" data-f="gcash">GCash to Load</button><button type="button" class="'+(from==='load'?'on':'')+'" data-f="load">Load to GCash</button></div></div>'+
+ '<div class="field"><label for="xf-a">Amount (PHP)</label><input id="xf-a" type="number" inputmode="decimal" min="1" step="0.01" data-focus></div>'+
+ '<div class="field"><label for="xf-n">Reason (optional)</label><input id="xf-n" type="text" maxlength="80" placeholder="Example: emergency load orders"></div>'+
+ '<div class="receipt" id="xf-rc"></div><div class="err" id="xf-err"></div>'+
+ '<div class="wrapbtns"><button class="btn primary grow" id="xf-go">Move money</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
+  var dir=from;
+  function q(i){return p.querySelector('#'+i)}
+  function paint(){
+   var a=r2(q('xf-a').value),to=dir==='gcash'?'load':'gcash',mm=S.money||m,sb=dir==='load'?mm.loadBal:mm.gcashBal,db=to==='load'?mm.loadBal:mm.gcashBal;
+   q('xf-rc').innerHTML='<div class="r"><span>'+wName(dir)+' wallet now</span><span>'+php(sb)+'</span></div><div class="r"><span>'+wName(to)+' wallet now</span><span>'+php(db)+'</span></div>'+(a>0?'<hr><div class="r tot"><span>'+wName(dir)+' after</span><span class="'+(sb-a<0?'neg':'')+'">'+php(sb-a)+'</span></div><div class="r tot"><span>'+wName(to)+' after</span><span>'+php(db+a)+'</span></div>':'');
+  }
+  q('xf-d').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;dir=b.dataset.f;[].forEach.call(q('xf-d').children,function(x){x.classList.toggle('on',x===b)});paint()});
+  q('xf-a').addEventListener('input',paint);paint();
+  q('xf-go').addEventListener('click',async function(){
+   var a=r2(q('xf-a').value),err=q('xf-err'),mm=S.money||m,sb=dir==='load'?mm.loadBal:mm.gcashBal;
+   if(!(a>0)){err.textContent='Enter the amount to move.';return}
+   if(a>sb+0.004){err.textContent='The '+wName(dir)+' wallet has only '+php(sb)+'.';return}
+   this.disabled=true;err.textContent='';
+   try{await api('addTransfer',{from:dir,amount:a,note:q('xf-n').value.trim(),cid:'x'+Date.now()+Math.random().toString(36).slice(2,6)});closeSheet();toast('Moved '+php(a)+' from '+wName(dir)+' to '+wName(dir==='gcash'?'load':'gcash'))}
+   catch(e){err.textContent=e.message;this.disabled=false}
+  });
+ });
+}
+function openXferDetail(id){
+ var t=(S.transfers||[]).filter(function(x){return x.id===id})[0];if(!t)return;
+ var h=head(wName(t.from)+' to '+wName(t.to))+'<div class="receipt"><div class="r tot"><span>Amount moved</span><span>'+php(t.amount)+'</span></div></div><div class="stamp">'+ic('clock',16)+'<span>Moved by <b>'+esc(t.byName)+'</b> on '+esc(dtLabel(t.at))+'</span></div>'+(t.note?'<div class="sm">Reason: '+esc(t.note)+'</div>':'');
+ if(t.status==='void')h+='<div class="note warn"><b>Voided</b> by '+esc(t.voidedByName)+' on '+esc(dtLabel(t.voidedAt))+'.<br>Reason: '+esc(t.voidReason)+'</div>';
+ else if(canTouch(t))h+='<div class="wrapbtns"><button class="btn danger" id="vx">'+ic('trash',18)+'Void this move</button></div>';
+ openSheet(h,function(p){var b=p.querySelector('#vx');if(b)b.addEventListener('click',function(){voidSheet('Void this move?','The money goes back to the '+wName(t.from)+' wallet. This only works if the '+wName(t.to)+' wallet still has it.','voidTransfer',t.id)})});
+}
+
 /* ================= events ================= */
 $app.addEventListener('input',function(e){
  var t=e.target;
@@ -1933,6 +1981,8 @@ $app.addEventListener('click',async function(e){
  else if(a==='buy')openPurchase();
  else if(a==='pitem')openPurchaseDetail(id);
  else if(a==='titem')openTopupDetail(id);
+ else if(a==='xfer')openXfer(b.dataset.from==='load'?'load':'gcash');
+ else if(a==='xitem')openXferDetail(id);
  else if(a==='gitem')openGcashDetail(id);
  else if(a==='gstmt')openStatement();
  else if(a==='inboxadd'){try{await api('inboxAdd',{id:id,type:b.dataset.k});toast('Added')}catch(x){toast(x.message)}}

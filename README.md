@@ -199,6 +199,16 @@ The app looks old after an update: close and open it again. If you replaced the 
 
 Stock counts and Load selling can be added as new tabs in the same app and Sheet.
 
+## Moving money between GCash and Load
+
+For emergencies, money can be moved from the GCash wallet to the Load wallet, or from the Load wallet to GCash.
+
+- Open the GCash or Load tab and tap Move money on the wallet card, or open the Money tab and tap Move GCash to Load or Move Load to GCash.
+- Choose the direction, type the amount, and add a short reason if you like. The screen shows both wallets before and after.
+- You cannot move more than the source wallet has.
+- The capital left, the cash in the drawer, and the income do not change, because the money only moves between the two wallets.
+- The Money tab shows the total moved each way and a history. Tap a move to see it. The person who made it, or the admin, can void it with a reason. A move cannot be voided if the money was already used.
+
 ## Screenshot upload (GCash and Load)
 
 Yda and Mark can add transactions from screenshots. There is one upload button in the GCash tab and one in the Load tab, because the GCash app and the Maribank app show different receipts. The button for the tab you are in decides which list the entries go to.
