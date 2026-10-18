@@ -275,7 +275,7 @@ html{-webkit-text-size-adjust:100%}
 (function(){
 'use strict';
 /* ================= SETTINGS ================= */
-var APP_VERSION='1.11.0',APP_CREATED='October 17, 2026';
+var APP_VERSION='1.12.0',APP_CREATED='October 17, 2026';
 function footerHtml(){return '<footer class="foot"><div>Created on '+APP_CREATED+' · Version '+APP_VERSION+'</div><div>Developed by: <b>MARK JUMIL T. PADILLA</b></div></footer>'}
 var API_URL='https://script.google.com/macros/s/AKfycbyjArN8FEVTLGhmeb0mf3e7Mv46yT6aLOieNOQ96jLzsHCmKFt3D0m4pzG9GAjEJ97v/exec'; /* the Apps Script Web app URL ending in /exec */
 var DEFAULT_PIN='102026';
@@ -1892,9 +1892,9 @@ function xferCard(canEdit){
  var list=(S.transfers||[]).slice().sort(function(a,b){return b.at-a.at}),m=S.money||{};
  var h='<div class="card stack" style="gap:8px"><b>Moved between wallets</b>'+
   '<div class="row between"><span class="sm">GCash to Load</span><span class="num">'+php(m.toLoad||0)+'</span></div><div class="row between"><span class="sm">Load to GCash</span><span class="num">'+php(m.toGcash||0)+'</span></div>'+
-  '<div class="sm muted">Moving money between the two wallets is for emergencies. It does not change the capital left, the cash in the drawer, or the income.</div>';
+  '<div class="row between"><span class="sm">Service fees paid for moving</span><span class="num">'+php(m.xferFees||0)+'</span></div><div class="sm muted">Moving money between the two wallets is for emergencies. It does not change the capital left, the cash in the drawer, or the income. A service fee is taken from the wallet the money leaves and is listed here on its own.</div>';
  if(canEdit)h+='<div class="wrapbtns"><button class="btn soft" data-act="xfer" data-from="gcash">Move GCash to Load</button><button class="btn soft" data-act="xfer" data-from="load">Move Load to GCash</button></div>';
- if(list.length)h+='<div class="list">'+list.slice(0,8).map(function(t){var v=t.status==='void';return '<button class="li lib'+(v?' voided':'')+'" data-act="xitem" data-id="'+esc(t.id)+'"><div class="grow"><div><b>'+wName(t.from)+' to '+wName(t.to)+'</b> <span class="muted num">'+php(t.amount)+'</span>'+(v?' <span class="chip admin">Voided</span>':'')+'</div><div class="sm muted">'+esc(dtLabel(t.at))+' by '+esc(t.byName)+(t.note?' · '+esc(t.note):'')+'</div></div></button>'}).join('')+'</div>';
+ if(list.length)h+='<div class="list">'+list.slice(0,8).map(function(t){var v=t.status==='void';return '<button class="li lib'+(v?' voided':'')+'" data-act="xitem" data-id="'+esc(t.id)+'"><div class="grow"><div><b>'+wName(t.from)+' to '+wName(t.to)+'</b> <span class="muted num">'+php(t.amount)+'</span>'+(t.fee>0?' <span class="chip">Fee '+php(t.fee)+'</span>':'')+(v?' <span class="chip admin">Voided</span>':'')+'</div><div class="sm muted">'+esc(dtLabel(t.at))+' by '+esc(t.byName)+(t.note?' · '+esc(t.note):'')+'</div></div></button>'}).join('')+'</div>';
  return h+'</div>';
 }
 function openXfer(from){
@@ -1903,30 +1903,32 @@ function openXfer(from){
  '<p style="margin:0">Use this in an emergency, for example when the Load wallet is empty but the GCash wallet has money. The total money stays the same.</p>'+
  '<div class="field"><label>Direction</label><div class="seg" id="xf-d"><button type="button" class="'+(from==='gcash'?'on':'')+'" data-f="gcash">GCash to Load</button><button type="button" class="'+(from==='load'?'on':'')+'" data-f="load">Load to GCash</button></div></div>'+
  '<div class="field"><label for="xf-a">Amount (PHP)</label><input id="xf-a" type="number" inputmode="decimal" min="1" step="0.01" data-focus></div>'+
+ '<div class="field"><label for="xf-f">Service fee (PHP)</label><input id="xf-f" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"><div class="sm muted">Type 0 if there is no fee. The fee is taken from the wallet the money leaves.</div></div>'+
  '<div class="field"><label for="xf-n">Reason (optional)</label><input id="xf-n" type="text" maxlength="80" placeholder="Example: emergency load orders"></div>'+
  '<div class="receipt" id="xf-rc"></div><div class="err" id="xf-err"></div>'+
  '<div class="wrapbtns"><button class="btn primary grow" id="xf-go">Move money</button><button class="btn ghost" data-sheet="close">Cancel</button></div>',function(p){
   var dir=from;
   function q(i){return p.querySelector('#'+i)}
   function paint(){
-   var a=r2(q('xf-a').value),to=dir==='gcash'?'load':'gcash',mm=S.money||m,sb=dir==='load'?mm.loadBal:mm.gcashBal,db=to==='load'?mm.loadBal:mm.gcashBal;
-   q('xf-rc').innerHTML='<div class="r"><span>'+wName(dir)+' wallet now</span><span>'+php(sb)+'</span></div><div class="r"><span>'+wName(to)+' wallet now</span><span>'+php(db)+'</span></div>'+(a>0?'<hr><div class="r tot"><span>'+wName(dir)+' after</span><span class="'+(sb-a<0?'neg':'')+'">'+php(sb-a)+'</span></div><div class="r tot"><span>'+wName(to)+' after</span><span>'+php(db+a)+'</span></div>':'');
+   var a=r2(q('xf-a').value),fe=r2(q('xf-f').value)||0,to=dir==='gcash'?'load':'gcash',mm=S.money||m,sb=dir==='load'?mm.loadBal:mm.gcashBal,db=to==='load'?mm.loadBal:mm.gcashBal;
+   q('xf-rc').innerHTML='<div class="r"><span>'+wName(dir)+' wallet now</span><span>'+php(sb)+'</span></div><div class="r"><span>'+wName(to)+' wallet now</span><span>'+php(db)+'</span></div>'+(a>0?'<hr>'+(fe>0?'<div class="r"><span>Service fee</span><span>'+php(fe)+'</span></div>':'')+'<div class="r tot"><span>'+wName(dir)+' after</span><span class="'+(sb-a-fe<0?'neg':'')+'">'+php(sb-a-fe)+'</span></div><div class="r tot"><span>'+wName(to)+' after</span><span>'+php(db+a)+'</span></div>':'');
   }
   q('xf-d').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;dir=b.dataset.f;[].forEach.call(q('xf-d').children,function(x){x.classList.toggle('on',x===b)});paint()});
-  q('xf-a').addEventListener('input',paint);paint();
+  q('xf-a').addEventListener('input',paint);q('xf-f').addEventListener('input',paint);paint();
   q('xf-go').addEventListener('click',async function(){
-   var a=r2(q('xf-a').value),err=q('xf-err'),mm=S.money||m,sb=dir==='load'?mm.loadBal:mm.gcashBal;
+   var a=r2(q('xf-a').value),fe=r2(q('xf-f').value)||0,err=q('xf-err'),mm=S.money||m,sb=dir==='load'?mm.loadBal:mm.gcashBal;
+   if(fe<0){err.textContent='The service fee cannot be below 0.';return}
    if(!(a>0)){err.textContent='Enter the amount to move.';return}
-   if(a>sb+0.004){err.textContent='The '+wName(dir)+' wallet has only '+php(sb)+'.';return}
+   if(a+fe>sb+0.004){err.textContent='The '+wName(dir)+' wallet has only '+php(sb)+'. It needs the amount plus the service fee.';return}
    this.disabled=true;err.textContent='';
-   try{await api('addTransfer',{from:dir,amount:a,note:q('xf-n').value.trim(),cid:'x'+Date.now()+Math.random().toString(36).slice(2,6)});closeSheet();toast('Moved '+php(a)+' from '+wName(dir)+' to '+wName(dir==='gcash'?'load':'gcash'))}
+   try{await api('addTransfer',{from:dir,amount:a,fee:fe,note:q('xf-n').value.trim(),cid:'x'+Date.now()+Math.random().toString(36).slice(2,6)});closeSheet();toast('Moved '+php(a)+' from '+wName(dir)+' to '+wName(dir==='gcash'?'load':'gcash'))}
    catch(e){err.textContent=e.message;this.disabled=false}
   });
  });
 }
 function openXferDetail(id){
  var t=(S.transfers||[]).filter(function(x){return x.id===id})[0];if(!t)return;
- var h=head(wName(t.from)+' to '+wName(t.to))+'<div class="receipt"><div class="r tot"><span>Amount moved</span><span>'+php(t.amount)+'</span></div></div><div class="stamp">'+ic('clock',16)+'<span>Moved by <b>'+esc(t.byName)+'</b> on '+esc(dtLabel(t.at))+'</span></div>'+(t.note?'<div class="sm">Reason: '+esc(t.note)+'</div>':'');
+ var h=head(wName(t.from)+' to '+wName(t.to))+'<div class="receipt"><div class="r"><span>Service fee</span><span>'+php(t.fee||0)+'</span></div><div class="r tot"><span>Amount moved</span><span>'+php(t.amount)+'</span></div></div><div class="stamp">'+ic('clock',16)+'<span>Moved by <b>'+esc(t.byName)+'</b> on '+esc(dtLabel(t.at))+'</span></div>'+(t.note?'<div class="sm">Reason: '+esc(t.note)+'</div>':'');
  if(t.status==='void')h+='<div class="note warn"><b>Voided</b> by '+esc(t.voidedByName)+' on '+esc(dtLabel(t.voidedAt))+'.<br>Reason: '+esc(t.voidReason)+'</div>';
  else if(canTouch(t))h+='<div class="wrapbtns"><button class="btn danger" id="vx">'+ic('trash',18)+'Void this move</button></div>';
  openSheet(h,function(p){var b=p.querySelector('#vx');if(b)b.addEventListener('click',function(){voidSheet('Void this move?','The money goes back to the '+wName(t.from)+' wallet. This only works if the '+wName(t.to)+' wallet still has it.','voidTransfer',t.id)})});

@@ -205,7 +205,9 @@ For emergencies, money can be moved from the GCash wallet to the Load wallet, or
 
 - Open the GCash or Load tab and tap Move money on the wallet card, or open the Money tab and tap Move GCash to Load or Move Load to GCash.
 - Choose the direction, type the amount, and add a short reason if you like. The screen shows both wallets before and after.
-- You cannot move more than the source wallet has.
+- Type the service fee in the Service fee box. It can be 0 or more. The fee is taken from the wallet the money leaves, so that wallet goes down by the amount plus the fee, and the other wallet goes up by the amount.
+- You cannot move more than the source wallet has, including the fee.
+- Service fees paid are listed on their own in the Money tab. They are not taken out of the income figure.
 - The capital left, the cash in the drawer, and the income do not change, because the money only moves between the two wallets.
 - The Money tab shows the total moved each way and a history. Tap a move to see it. The person who made it, or the admin, can void it with a reason. A move cannot be voided if the money was already used.
 
